@@ -229,6 +229,9 @@ Ltac cases E :=
   ((repeat match type of E with
            | _ \/ _ => destruct E as [E | E]
            end)
+   || (match type of E with
+       | N => destruct E using indN
+       end)
    || (is_var E; destruct E)
    || match type of E with
       | {_} + {_} => destruct E
@@ -454,3 +457,8 @@ Ltac unfold_recurse f k :=
    linear_arithmetic). *)
 Arguments N.mul: simpl never.
 Arguments N.add: simpl never.
+
+Definition IF_then_else (p q1 q2 : Prop) :=
+  (p /\ q1) \/ (~p /\ q2).
+  
+Notation "'IFF' p 'then' q1 'else' q2" := (IF_then_else p q1 q2) (at level 95).
