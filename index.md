@@ -56,16 +56,15 @@ Proofs](https://blog.sigplan.org/2019/09/12/program-verification-has-it-lost-its
 
 ## Class info
 
-Location: ~~CS26~~ [Google Meet](http://meet.google.com/tmf-zuca-abs)
+Location: SSB 134
 
-Videos: [Google
-Drive](https://drive.google.com/drive/folders/1SgJ_qaENAyKvoe8Fe8DAQFhY2bncrxrd?usp=sharing)  
+Slot: G
 
 Time: 
-  * M 1100 - 1150
-  * Tu 1000 - 1050
-  * W 0900 - 0950
-  * Th 1200 - 1250
+  * M 1300 -- 1350
+  * W 1700 -- 1750
+  * Th 1000 -- 1050
+  * F 0900 -- 0950
 
 ## Credits
 
@@ -79,12 +78,12 @@ Time:
 
 ## Pre-requisite
 
-[CS3100](http://kcsrk.info/cs3100_f19/) (only the OCaml parts) or equivalent. 
+[CS3100](http://kcsrk.info/cs3100_m20/) (only the OCaml parts) or equivalent. 
 
 You should feel comfortable with functional programming concepts. If you are
 able to get through the assignments 1 to 4, you are ready for this course. All
 the course materials, and assignments are available on the [CS3100
-website](http://kcsrk.info/cs3100_f19/). 
+website](http://kcsrk.info/cs3100_m20/). 
 
 **I highly recommend that you complete assignments 1 to 4 before the start of
 this course**.
