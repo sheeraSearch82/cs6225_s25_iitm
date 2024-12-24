@@ -13,8 +13,8 @@ moodle](https://courses.iitm.ac.in/course/view.php?id=5339).
 
 | Problem Set | Released | Due Date | Topic |
 |------------:|----------|----------|-------|
-| 1 | | 10/02/2021 | |
-| 2 | | 19/02/2021 | |
+| 1 | | | |
+| 2 | | | |
 
 <br/>
 
