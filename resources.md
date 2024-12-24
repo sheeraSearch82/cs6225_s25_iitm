@@ -7,58 +7,83 @@ permalink: /resources/
 # Course Website
 
 This course website, including all of the lecture materials, lives
-[here](http://kcsrk.info/cs6225_s21_iitm/).
+[here](http://kcsrk.info/cs6225_s25_iitm/).
 
 # Software
 
-## Coq
+We need Coq and F\* for this course. It is easiest to install them using
+[opam](https://opam.ocaml.org/), the OCaml package manager. Install opam for
+your OS using [these
+instructions](https://opam.ocaml.org/doc/Install.html#Binary-distribution). It
+is recommended that you use Linux or macOS for this course.
 
-For Coq, I use [CoqIDE](https://github.com/coq/coq/releases/tag/V8.10.2).
-If you are an emacs user, then [Proof General](https://proofgeneral.github.io/)
-is recommended.
-
-You will need to ensure that the location of the Coq binaries is in your `PATH`
-so that the make files for the frap book and the assignments work. On MacOS,
-this means that the following line is included in my `.bashrc` file:
+Then follow the instructions below:
 
 ```bash
-export PATH=$PATH:/Applications/CoqIDE_8.10.2.app/Contents/Resources/bin/
+$ opam switch create cs6225 4.14.0 #create a fresh opam switch named cs6225 with OCaml 4.14.0
+$ eval $(opam env --switch=fstar-fresh)
+$ opam pin add coq 8.16.0 #Install coq
+$ opam install coqide #Install coqide
+$ opam pin add fstar --dev-repo #Install F*
 ```
 
-This will vary between OS versions. We will ensure that everyone has a working
-environment by the end of first week.
+For [karamel](https://fstarlang.github.io/lowstar/html/index.html), python2.7
+installation is needed. karamel requires GNU make. If you are on macOS, you can
+install it using brew. The following steps are only for macOS. If you are on
+Linux, skip to the karamel installation step.
 
-## F\*
+```bash
+#only for macOS
+$ brew install make
+$ alias make=`gmake` # create an alias in the current shell
+$ make --version # verify
+gmake: getcwd: No such file or directory
+GNU Make 4.4.1
+Built for aarch64-apple-darwin24.0.0
+Copyright (C) 1988-2023 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+```
 
-The easiest way to try out F\* quickly is directly in your browser using the
-[online editor that's part of the F\*
-tutorial](https://www.fstar-lang.org/run.php). There is also a better,
-experimental [online editor](http://fstar.ht.vc/).
+Now install `karamel`:
 
-I use [Spacemacs](https://www.spacemacs.org/) +
-[Fstar-mode.el](https://github.com/FStarLang/fstar-mode.el) + [Spacemacs layer
-for F\*](https://github.com/kyoDralliam/fstar-layer/). I recommend this setup
-for interactive development. 
+```bash
+$ opam pin add karamel --dev-repo
+```
+
+You can verify everything is set up correctly by using the following commands:
+
+```bash
+$ coqide #should open Coq IDE
+$ fstar.exe --version
+F* 2024.09.05~dev
+platform=Linux_x86_64
+compiler=OCaml 4.14.0
+date=2024-10-24 17:40:26 -0700
+commit=8b6fce63ca91b16386d8f76e82ea87a3c109a208
+$ krml -version
+KaRaMeL version: 87384b244a98a0c41a2e14c65b872d885af7c8df
+```
+
+You should see similar output, but necessarily the same hashes.
+
+Finally, for F\* editor support, install
+[vscode](https://code.visualstudio.com/) and [F* vscode
+extension](https://github.com/FStarLang/fstar-vscode-assistant).
 
 # Text Books
 
-We will be closely following 
+We will use the two freely available books:
 
-* *Formal Reasoning about Programs*, Adam Chlipala. Freely available
-  [online](http://adam.chlipala.net/frap/).
-
-for the Coq part of the course. For F\*, there is no prescribed text book. We
-will look at examples from the [tutorials](https://www.fstar-lang.org/tutorial/)
-and [other](https://prosecco.gforge.inria.fr/personal/hritcu/teaching/vtsa2019/)
-[lectures](https://www.cs.uoregon.edu/research/summerschool/summer19/topics.php#Swamy).
+* *Formal Reasoning about Programs*, Adam Chlipala. Freely available [online](http://adam.chlipala.net/frap/).
+* *Proof-oriented Programming in F\**, Nikhil Swamy, Guido Martínez, and Aseem Rastogi. Freely available [online](http://fstar-lang.org/tutorial/proof-oriented-programming-in-fstar.pdf).
 
 Other reference books are:
 
 * *Software Foundations*, Benjamin Pierce et al. Freely available [online](https://softwarefoundations.cis.upenn.edu/).
-* *Types and Programming Languages*, Benjamin Pierce, MIT Press, 1st edition,
-  2002. Ebook is available in IITM library.
-* *Practical Foundations for Programming Languages*, Robert Harper, Cambridge
-  University Press, 2nd edition, 2016. Freely available [online](https://www.cs.cmu.edu/~rwh/pfpl/2nded.pdf).
+* *Types and Programming Languages*, Benjamin Pierce, MIT Press, 1st edition, 2002. Ebook is available in IITM library.
+* *Practical Foundations for Programming Languages*, Robert Harper, Cambridge University Press, 2nd edition, 2016. Freely available [online](https://www.cs.cmu.edu/~rwh/pfpl/2nded.pdf).
 
 # Tactics Reference
 

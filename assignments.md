@@ -5,7 +5,7 @@ permalink: /assignments/
 ---
 
 For the assignments, I would recommend cloning the [course
-website](https://github.com/kayceesrk/cs6225_s21_iitm), and find the assignments
+website](https://github.com/kayceesrk/cs6225_s25_iitm), and find the assignments
 under `assignments/pset*`. 
 
 All assignments should be submitted through the [course
