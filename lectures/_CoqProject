@@ -1,4 +1,5 @@
 -R ../frap Frap
+-Q . ProjectRoot
 FunctionalProgramming.v
 Logic.v
 Induction.v
@@ -7,5 +8,5 @@ Interpreters.v
 LogicProgramming.v
 TransitionSystems.v
 OperationalSemantics.v
-LambdaCalculus.v
+LambdaCalculusAndTypeSoundness.v
 HoareLogic.v
