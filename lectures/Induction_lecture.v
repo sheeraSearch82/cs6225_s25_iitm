@@ -116,13 +116,14 @@ Print app_nil.
 
 Check list_ind.
 
+
 Theorem app_assoc : forall (A:Type) (l1 l2 l3 : list A),
   l1 ++ (l2 ++ l3) = (l1 ++ l2) ++ l3.
 Proof.
   intros A l1 l2 l3.
   induction l1.
   - simpl. trivial.
-  - simpl. rewrite <- IHl1. trivial.
+  - simpl. rewrite -> IHl1. trivial.
 Qed.
 
 
@@ -272,6 +273,8 @@ Fail Fixpoint sum_to (n:nat) : nat :=
 
 Fail Fixpoint inf (x:nat) : nat := inf x.
 
+
+
 (**
   + Coq does not permit any infinite loops
 
@@ -294,6 +297,10 @@ Can't we just rule out infinite programs?
     - [n-1] syntactically larger than [n].
 *)
 
+Locate "-".
+
+Check Nat.sub.
+
 Fail Fixpoint sum_to (n:nat) : nat :=
   if n =? 0 then 0 else n + sum_to (n-1).
 
@@ -302,9 +309,6 @@ Fixpoint sum_to (n:nat) : nat :=
   | 0 => 0
   | S k => n + sum_to k
   end.
-
-
-Print nat.
 
 
 
@@ -509,7 +513,8 @@ Coq code.  That makes it possible for us to
 - extract OCaml code that can be compiled and run more efficiently
   than the original Coq code.
 
-Let's first prove that a tail recursive factorial is equivalent to the non-tail-recursive one, and then extract the code for the tail recursive factorial.
+Let's first prove that a tail recursive factorial is equivalent to the 
+non-tail-recursive one, and then extract the code for the tail recursive factorial.
 
 *)
 
@@ -532,7 +537,7 @@ Proof.
   unfold fact_tail_rec.
   induction n.
   - simpl. trivial.
-  - simpl. rewrite IHn.
+  - simpl. rewrite IHn. 
 Abort.
 
 (**

@@ -13,7 +13,16 @@ Definition natlist : Type := list nat.
 (* explicit application of type-level functions *)
 Check natlist.
 
+Check Type.
+
 (* What, then, is the type of a theorem? *)
+
+(**
+  Curry-Howard correspondence
+  ---------------------------
+
+  Theorem:Proof :: Type:Program
+*)
 
 Theorem obvious_fact : 1 + 1 = 2.
 Proof. trivial. Qed.
@@ -75,6 +84,8 @@ computations.
 *)
 
 Check Set.
+
+Check Type.
 
 (* What is the type of [1 + 1 = 2]? *)
 
@@ -373,6 +384,8 @@ Qed.
 (* What is [and_ex]? *)
 
 Print and_ex.
+
+Print split.
 
 (**
 Coq responds:
@@ -684,12 +697,15 @@ Abort.
 Theorem excluded_middle : forall P, P \/ ~P.
 Proof.
   intros P.
-  right.
+  left.
+Abort.
+(*  right.
   unfold not.
   intros.
-Abort.
+Abort. *)
 
-(* Coq uses constructive logic since the act of proving programs is by building evidence bottom up. No bottom up evidence for [P \/ ~P]. *) 
+(* Coq uses constructive logic since the act of proving programs is by building 
+   evidence bottom up. No bottom up evidence for [P \/ ~P]. *) 
 
 Require Coq.Logic.Classical.
 
@@ -705,7 +721,9 @@ Coq responds:
 *** [ classic : forall P : Prop, P \/ ~ P ]
 >>
 
-The [***] indicates that [classic] is an _axiom_ that the library simply asserts without proof.  Using that axiom, all the usual theorems of classical logic can be proved, such as double negation: *)
+The [***] indicates that [classic] is an _axiom_ that the library simply 
+asserts without proof.  Using that axiom, all the usual theorems of classical 
+logic can be proved, such as double negation: *)
 
 
 End LetsDoClassicalReasoning.
@@ -769,5 +787,6 @@ Definition pnqiq' : forall P Q, forall (_: P /\ Q), Q := pnqiq.
 (**
 
 + Only truly primitive pieces are [Inductive] definitions and [forall] types. 
-   + Everything else --- equality, implication, conjunction, disjunction, True, False, negation --- can all be expressed in terms of those two primitives.
+   + Everything else --- equality, implication, conjunction, disjunction, True, 
+     False, negation --- can all be expressed in terms of those two primitives.
 *)
