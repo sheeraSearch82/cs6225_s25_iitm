@@ -9,12 +9,15 @@ website](https://github.com/kayceesrk/cs6225_s25_iitm), and find the assignments
 under `assignments/pset*`. 
 
 All assignments should be submitted through the [course
-moodle](https://courses.iitm.ac.in/course/view.php?id=5339). 
+moodle](). 
 
 | Problem Set | Released | Due Date | Topic |
 |------------:|----------|----------|-------|
-| 1 | | | |
-| 2 | | | |
+| 1 | 17/01/25 | 24/01/25 | Functional Programming |
+| 2 | 24/01/25 | 31/01/25 | Logic + Induction |
+| 3 | 31/01/25 | 07/02/25 | Program Analysis |
+| 4 | 07/02/25 | 14/02/25 | ContainersAndHoFs |
+| 5 | 14/02/25 | 21/02/25 | BST |
 
 <br/>
 
