@@ -1,5 +1,7 @@
 (* Types and Functions *)
 
+(* type day = Sun | Mon | .. *) 
+
 Inductive day : Type :=
 | sun : day
 | mon : day
@@ -8,6 +10,12 @@ Inductive day : Type :=
 | thu : day
 | fri : day
 | sat : day.
+
+Check sun.
+
+(* Gallina *)
+
+(* Ltac *) 
 
 Let next_day d :=
   match d with
@@ -40,6 +48,14 @@ Qed.
 
 Print wed_after_tue.
 
+Check next_day tue.
+
+Check wed.
+
+Locate "=".
+
+
+
 (* eq_refl -- from Coq stdlib. Says "Equality is reflexive" *)
 
 Theorem wed_after_tue' : next_day tue = wed.
@@ -68,7 +84,7 @@ Proof. auto. (* stuck? *)
   simpl. discriminate.
   simpl. discriminate.
   simpl. discriminate.
-
+  simpl. trivial. discriminate.
 Qed.
 
 (* Same as previous; avoid tedium *)
@@ -87,7 +103,7 @@ Proof.
 Qed.
 
 Theorem mon_preceds_tues : forall d : day,
-  next_day d = tue -> d = mon.
+  next_day d = tue -> True = True -> d = mon.
 
 (* What's the intuitive proof? 
    - Consider every day one by one
@@ -96,7 +112,7 @@ Theorem mon_preceds_tues : forall d : day,
 *)
 Proof.
   (* naming introductions explicitly *)
-  intros d next_day_is_tue.
+  intros.
   destruct d; discriminate || trivial.
 
   (* || is a tactical. In t1 || t2, if t1 fails, then try t2. *)
@@ -117,6 +133,12 @@ Module MyList. (* We can have modules within files *)
 Inductive list (A : Type) : Type :=
 | nil : list A
 | cons : A -> list A -> list A.
+
+(* c.f. OCaml list definition in OCaml:
+
+  type 'a list = nil | cons of 'a * 'a list
+
+*)
 
 End MyList.
 
