@@ -64,6 +64,13 @@ Proofs](https://blog.sigplan.org/2019/09/12/program-verification-has-it-lost-its
     * Th 1000 -- 1050
     * F 0900 -- 0950
 
+## Async Communication
+
+Primarily over Slack. Here is the
+[invitation](https://join.slack.com/t/cs6225iitmspring25/signup?x=x-p8337212563872-8314393185378-8316955736708)
+to join the slack instance for the class. We will use Moodle for assignment
+submissions.
+
 ## Credits
 
 3-1-0-0-8-12
