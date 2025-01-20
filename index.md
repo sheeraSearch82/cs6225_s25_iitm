@@ -59,7 +59,7 @@ Proofs](https://blog.sigplan.org/2019/09/12/program-verification-has-it-lost-its
 + **Location:** SSB 134
 + **Slot:** G
 + **Time:**
-    * M 1300 -- 1350
+    * M 1200 -- 1250
     * W 1700 -- 1750
     * Th 1000 -- 1050
     * F 0900 -- 0950

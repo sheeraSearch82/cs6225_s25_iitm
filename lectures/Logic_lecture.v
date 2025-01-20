@@ -21,12 +21,21 @@ Check Type.
   Curry-Howard correspondence
   ---------------------------
 
-  Theorem:Proof :: Type:Program
+  Proof:Theorem :: Program:Type
 *)
 
 Theorem obvious_fact : 1 + 1 = 2.
 Proof. trivial. Qed.
+
+Definition obvious_fact' : 1 + 1 = 2.
+Proof. trivial. Qed.
+
+
 Check obvious_fact.
+
+(* compare with *)
+
+Check 42.
 
 (**
 Coq responds:
@@ -98,10 +107,6 @@ Check 1 + 1 = 2.
 Check 1 + 1 = 3.
 
 Check Prop.
-
-Check true.
-
-Check True.
 
 (**
 The type of [Prop] is also [Type].

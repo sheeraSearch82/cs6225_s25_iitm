@@ -84,7 +84,6 @@ Proof. auto. (* stuck? *)
   simpl. discriminate.
   simpl. discriminate.
   simpl. discriminate.
-  simpl. trivial. discriminate.
 Qed.
 
 (* Same as previous; avoid tedium *)
