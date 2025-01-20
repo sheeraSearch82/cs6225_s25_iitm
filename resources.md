@@ -21,7 +21,7 @@ Then follow the instructions below:
 
 ```bash
 $ opam switch create cs6225 4.14.0 #create a fresh opam switch named cs6225 with OCaml 4.14.0
-$ eval $(opam env --switch=fstar-fresh)
+$ eval $(opam env --switch=cs6225)
 $ opam pin add coq 8.16.0 #Install coq
 $ opam install coqide #Install coqide
 $ opam pin add fstar --dev-repo #Install F*

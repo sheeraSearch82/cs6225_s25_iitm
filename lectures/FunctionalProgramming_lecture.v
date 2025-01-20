@@ -160,6 +160,8 @@ Definition is_empty_sugar (A : Type) (lst : list A) :=
   end.
 (* [], :: are syntactic sugar for list constructors nil and cons *)
 
+Check is_empty.
+
 Compute is_empty nat [1].
 
 Compute is_empty nat [].
@@ -171,6 +173,8 @@ Definition is_empty' {A : Type} (lst : list A) :=
   | _::_ => false
   end.
 
+Compute is_empty bool [true].
+
 Compute is_empty' [1].
 
 Check is_empty'.
@@ -178,6 +182,11 @@ Check is_empty'.
 Compute @is_empty' nat [1]. (* provide implcit argument explicitly! *)
 
 Check @is_empty'.
+
+Check is_empty.
+Print is_empty.
+
+(* Print @is_empty'. why does it not work? *)
 
 Module MyLength.
 
