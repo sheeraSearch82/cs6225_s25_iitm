@@ -47,7 +47,7 @@ This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.
 ```
 
-Now install `karamel`:
+Now install F\* and `karamel`:
 
 ```bash
 $ opam pin add fstar --dev-repo #Install F*
