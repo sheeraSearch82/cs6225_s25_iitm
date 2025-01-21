@@ -24,18 +24,19 @@ $ opam switch create cs6225 4.14.0 #create a fresh opam switch named cs6225 with
 $ eval $(opam env --switch=cs6225)
 $ opam pin add coq 8.16.0 #Install coq
 $ opam install coqide #Install coqide
-$ opam pin add fstar --dev-repo #Install F*
 ```
 
-For [karamel](https://fstarlang.github.io/lowstar/html/index.html), python2.7
-installation is needed. karamel requires GNU make. If you are on macOS, you can
-install it using brew. The following steps are only for macOS. If you are on
-Linux, skip to the karamel installation step.
+F\* and karamel require GNU make. For
+[karamel](https://fstarlang.github.io/lowstar/html/index.html), python2.7
+installation is also needed. If you are on macOS, you can install it using
+[Homebrew](https://brew.sh/). The following steps are only for macOS. If you are
+on Linux, skip to the F\* karamel installation step.
 
 ```bash
 #only for macOS
 $ brew install make
-$ alias make=`gmake` # create an alias in the current shell
+$ opam var --global make=gmake # make opam use gmake
+$ alias make=gmake # create an alias in the current shell
 $ make --version # verify
 gmake: getcwd: No such file or directory
 GNU Make 4.4.1
@@ -49,6 +50,7 @@ There is NO WARRANTY, to the extent permitted by law.
 Now install `karamel`:
 
 ```bash
+$ opam pin add fstar --dev-repo #Install F*
 $ opam pin add karamel --dev-repo
 ```
 
