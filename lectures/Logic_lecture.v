@@ -197,7 +197,7 @@ The Coq proof below uses that reasoning.
 *)
 
 Proof.
-    intros P P_assumed. 
+    intros P P_evidence. 
     assumption. (* new tactic *)
 Qed.
 
@@ -275,7 +275,7 @@ Theorem syllogism' : forall P Q : Prop,
 Proof.
   intros.
   apply H in H0.
-  (* Can also [apply] to assumptions to do _forwards reasoning *)
+  (* Can also [apply] to assumptions to do _forwards_ reasoning *)
   assumption.
 Qed.
 
@@ -283,7 +283,7 @@ Qed.
 Theorem imp_trans : forall P Q R : Prop,
   (P -> Q) -> (Q -> R) -> (P -> R).
 Proof.
-  intros P Q R. intros evPimpQ. intros evQimpR. intros.
+  intros P Q R evPimpQ evQimpR evP.
 
   apply evQimpR.
   apply evPimpQ.
@@ -305,13 +305,11 @@ evQimpR (evPimpQ evP)
 
 Equivalent to the OCaml function
 
-let composition f g v = g (f v)
+let compose f g v = g (f v)
 
 let succ x = x + 1
 
-let succ2 = succ o succ
-
-let (|>) = v |> f |> g
+let succ2 = compose succ succ
 
 (**********************************************************************)
 
@@ -359,6 +357,8 @@ Locate "/\".
 Print and.
 
 (* 
+
+type ('a,'b) and = Conj of 'a * 'b
 
 type ('a,'b) and = Conj : 'a * 'b -> ('a,'b) and 
 
@@ -497,7 +497,6 @@ Next, let's prove a theorem involving both conjunction and disjunction. *)
 
 Theorem or_distr_and : forall P Q R, 
   P \/ (Q /\ R) -> (P \/ Q) /\ (P \/ R).
-
 Proof.
   intros P Q R PorQR.
   destruct PorQR.
@@ -592,12 +591,6 @@ Proof.
   exact I. (* new tactic *)
 Qed.
 
-(** The final tactic in that proof, [exact], can be used whenever you already
-know exactly the program expression you want to write to provide evidence for
-the goal you are trying to prove.  In this case, we know that [I] always
-provides evidence for [true].  Instead of [exact] we could also have used
-[trivial], which is capable of proving trivial propositions like [True]. *)
-
 (**********************************************************************)
 
 (** Negation *)
@@ -616,11 +609,15 @@ not = fun A : Prop => A -> False
   + [~P] is effectively syntactic sugar for [P -> False].
 *)
 
+Definition not' := fun A : Prop => (A -> False).
+Check not'.
+
 Theorem notFalse : ~False -> True.
 (** Intuition:  anything implies [True] *)
 Proof.
   unfold not. (* new tactic *)
   intros.
+  clear H. (* new tactic (optional) *)
   exact I.
 Qed.
 
@@ -648,7 +645,7 @@ notTrue = fun t_imp_f : True -> False => t_imp_f I
 
 * Proof is a higher-order function
   + Takes [t_imp_f] function and uses [I] to get the proof for [False]
-* We can never apply this function
+* This function cannot exist 
   + cannot produce a term that returns [False]
 *)
 
@@ -751,9 +748,10 @@ Check (eq42 43). (* 42 = 43 *)
 (* There's only one way to construct a value of type [eq],
    that's with the [eq_refl] constructor. *)
 Print eq.
+
 Check @eq_refl.
 
-Check @eq_refl nat 42.
+Check @eq_refl nat 42. 
 (* 
   + [@eq_refl] only takes just a single argument of type [nat]
     * An argument can only be equal to itself
@@ -787,8 +785,12 @@ Definition pnqiq : forall P Q, P /\ Q -> Q := fun P Q pnq =>
   match pnq with
   | conj evP evQ => evQ
   end.
-  
+
 Definition pnqiq' : forall P Q, forall (_: P /\ Q), Q := pnqiq.
+
+
+Definition succ  : nat -> nat := fun x => x + 1.
+Definition succ' : forall (_:nat), nat := fun x => x + 1.
 
 
 (**
@@ -796,4 +798,4 @@ Definition pnqiq' : forall P Q, forall (_: P /\ Q), Q := pnqiq.
 + Only truly primitive pieces are [Inductive] definitions and [forall] types. 
    + Everything else --- equality, implication, conjunction, disjunction, True, 
      False, negation --- can all be expressed in terms of those two primitives.
-*)
+*) 
