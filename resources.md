@@ -17,7 +17,7 @@ your OS using [these
 instructions](https://opam.ocaml.org/doc/Install.html#Binary-distribution). It
 is recommended that you use Linux or macOS for this course.
 
-Then follow the instructions below:
+Then follow the instructions below install `coq`:
 
 ```bash
 $ opam switch create cs6225 4.14.0 #create a fresh opam switch named cs6225 with OCaml 4.14.0
@@ -26,11 +26,21 @@ $ opam pin add coq 8.16.0 #Install coq
 $ opam install coqide #Install coqide
 ```
 
-F\* and karamel require GNU make. For
-[karamel](https://fstarlang.github.io/lowstar/html/index.html), python2.7
-installation is also needed. If you are on macOS, you can install it using
-[Homebrew](https://brew.sh/). The following steps are only for macOS. If you are
-on Linux, skip to the F\* karamel installation step.
+For F\*, we need a specific version. This version builds on Apple Silicon, but
+not newer versions.
+
+```bash
+$ wget https://github.com/FStarLang/FStar/archive/refs/tags/v2024.12.03.zip
+$ unzip v2024.12.03.zip
+$ cd FStar-2024.12.03
+$ opam install . #Install F*
+```
+
+For [karamel](https://fstarlang.github.io/lowstar/html/index.html), python2.7
+installation is also needed.  `karamel` also requires GNU make. If you are on
+macOS, you can install it using [Homebrew](https://brew.sh/). The following
+steps are only for macOS. If you are on Linux, skip to the `karamel`
+installation step.
 
 ```bash
 #only for macOS
@@ -47,11 +57,10 @@ This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.
 ```
 
-Now install F\* and `karamel`:
+Now install `karamel`:
 
 ```bash
-$ opam pin add fstar --dev-repo #Install F*
-$ opam pin add karamel --dev-repo
+$ opam pin add karamel --dev-repo #Install karamel
 ```
 
 You can verify everything is set up correctly by using the following commands:
