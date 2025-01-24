@@ -392,8 +392,6 @@ Qed.
 
 Print and_ex.
 
-Print split.
-
 (**
 Coq responds:
 <<
@@ -464,7 +462,6 @@ Inductive or (A B : Prop) : Prop :=
 >>
 *)
 
-
 Theorem or_comm : forall P Q, P \/ Q -> Q \/ P.
 
 (** Why does this hold?
@@ -473,6 +470,7 @@ That's what the Coq proof below does. *)
 
 Proof.
     intros P Q PorQ.
+    Print or.
     destruct PorQ.
     - right. assumption.
     - left. assumption.
@@ -523,6 +521,8 @@ Proof.
 Qed.
 
 
+(* stopped here 22/01 *)
+
 (**********************************************************************)
 
 (** [False] and [True]
@@ -553,6 +553,10 @@ Qed.
 
 Print explosion.
 Print False_ind.
+
+Inductive t := T : t.
+
+Print t_ind.
 
 (**
   + The [return P] in the pattern match above is a type annotation 
@@ -590,6 +594,10 @@ Proof.
   intros P P_holds. split. assumption. 
   exact I. (* new tactic *)
 Qed.
+
+Check I.
+
+Print True.
 
 (**********************************************************************)
 
@@ -629,6 +637,7 @@ Proof.
   unfold not. 
   intros t_imp_f. 
   apply t_imp_f.
+  
   exact I.
 Qed.
 
@@ -719,6 +728,12 @@ Import Coq.Logic.Classical.
 
 Print classic.
 
+Theorem excluded_middle : forall P, P \/ ~P.
+Proof.
+  exact classic.
+Qed.
+
+
 (**
 Coq responds:
 <<
@@ -748,6 +763,8 @@ Check (eq42 43). (* 42 = 43 *)
 (* There's only one way to construct a value of type [eq],
    that's with the [eq_refl] constructor. *)
 Print eq.
+
+Inductive eq' (A:Type) (x:A) := eq_refl' : eq' A x.
 
 Check @eq_refl.
 
