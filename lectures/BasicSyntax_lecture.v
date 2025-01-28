@@ -5,6 +5,9 @@
 
 Require Import Frap.
 
+(* If you see an error in the line above, you need to go to the `frap` 
+   directory in the course repo and do `make`. *)
+
 Module ArithWithConstants.
 
   Inductive arith : Set :=
@@ -50,7 +53,6 @@ Module ArithWithConstants.
      *   [x]'s type was introduced with [Inductive].) 
      *
      * c.f [induct] tactic. *)
-     
 
     simplify.
     (* [simplify]: simplify throughout the goal, applying the definitions of
@@ -113,7 +115,9 @@ Module ArithWithConstants.
     (* [equality]: a complete decision procedure for the theory of equality
      *   and uninterpreted functions.  That is, the goal must follow
      *   from only reflexivity, symmetry, transitivity, and congruence
-     *   of equality, including that functions really do behave as functions. *)
+     *   of equality, including that functions really do behave as functions.
+     *
+     * c.f. [trivial]. *)
   Qed.
 
 End ArithWithConstants.
@@ -168,7 +172,8 @@ Module ArithWithVariables.
   | Var (x : var) (* <-- this is the new constructor! *)
   | Plus (e1 e2 : arith)
   | Times (e1 e2 : arith).
-
+  
+  Print var.
 
   Example ex1 := Const 42.
   Example ex2 := Plus (Const 1) (Times (Var "x") (Const 3)).
@@ -261,7 +266,8 @@ Module ArithWithVariables.
 
 
   (* We use an infix operator [==v] for equality tests on strings.*)
-  Fixpoint substitute (inThis : arith) (replaceThis : var) (withThis : arith) : arith :=
+  Fixpoint substitute (inThis : arith) (replaceThis : var) 
+                      (withThis : arith) : arith :=
     match inThis with
     | Const _ => inThis
     | Var x => if x ==v replaceThis then withThis else inThis
@@ -291,13 +297,20 @@ Module ArithWithVariables.
        * [e] essentially has a Boolean type, we consider 
        * whether [e] is true or false. 
        *
-       * [cases] is like [destruct] but more powerful
+       * [cases] is like [destruct] but more powerful.
        *)
       + linear_arithmetic.
       + simplify. (* XXX *)
         linear_arithmetic.
 
     - simplify.
+       (*
+                   s1 <= i1 + w
+                   s2 <= i2 + w
+         ----------------------------------
+         1 + max s1 s2 <= 1 + max i1 i2 + w
+         
+        *)
       linear_arithmetic.
 
     - simplify.
@@ -313,23 +326,20 @@ Module ArithWithVariables.
 
     simplify.
     
-    cases withThis; (* forall e, depth e > 0 *)
-    simplify; linear_arithmetic.
+    - cases withThis; (* forall e, depth e > 0 *)
+      simplify; linear_arithmetic.
 
-    simplify.
-    cases (x ==v replaceThis).
-    (* [cases e]: break the proof into one case for each constructor that might have
-     *   been used to build the value of expression [e].  In the special case where
-     *   [e] essentially has a Boolean type, we consider whether [e] is true or false. *)
-    linear_arithmetic.
-    simplify.
-    cases withThis; simplify; linear_arithmetic.
+    - simplify.
+      cases (x ==v replaceThis).
+      linear_arithmetic.
+      simplify.
+      cases withThis; simplify; linear_arithmetic.
 
-    simplify.
-    linear_arithmetic.
+    - simplify.
+      linear_arithmetic.
 
-    simplify.
-    linear_arithmetic.
+    - simplify.
+      linear_arithmetic.
   Qed.
 
 
@@ -407,7 +417,6 @@ Module ArithWithVariables.
         | [ |- context[if ?a ==v ?b then _ else _] ] => cases (a ==v b); simplify
         end; equality.
   Qed.
-
 
 
 

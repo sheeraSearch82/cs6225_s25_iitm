@@ -108,14 +108,13 @@ Proof.
  induction lst. (* new tactic *)
 - simpl. trivial.
 - simpl.
-  rewrite -> IHlst. (* new tactic *)
+  rewrite IHlst. (* new tactic *)
   trivial.
 Qed.
 
 Print app_nil.
 
 Check list_ind.
-
 
 Theorem app_assoc : forall (A:Type) (l1 l2 l3 : list A),
   l1 ++ (l2 ++ l3) = (l1 ++ l2) ++ l3.
@@ -301,6 +300,8 @@ Locate "-".
 
 Check Nat.sub.
 
+Print Nat.sub.
+
 Fail Fixpoint sum_to (n:nat) : nat :=
   if n =? 0 then 0 else n + sum_to (n-1).
 
@@ -376,6 +377,8 @@ QED
 >>
 
 Now let's do the proof in Coq. *)
+
+(* STOPPED HERE 24/01 *)
 
 Theorem sum_sq : forall n : nat,
   sum_to n = n * (n+1) / 2.
@@ -487,6 +490,8 @@ Proof.
   - rewrite sum_sq_no_div. trivial.
 Qed.
 
+Print sum_sq.
+
 (** When we use [apply div_helper] in that proof, Coq generates two new
 subgoals---one for each of the propositions [c <> 0] and [c * a = b] in the type
 of [div_helper].
@@ -549,7 +554,7 @@ We need to prove an intermediate lemma about [fact_tail_rec'] for the proof of o
 Lemma fact_tail_rec_lem : forall n acc,
   fact_tail_rec' n acc = acc * fact_tail_rec' n 1.
 Proof.
-  intros n.
+  intros n. (* what happens if you do [intros]? *)
   induction n.
   - intro acc. simpl. ring.
   - intro acc. simpl.
