@@ -10,6 +10,7 @@ Require Import Frap.
 
 Module ArithWithConstants.
 
+  (* specification -- models -- verification *)
   Inductive arith : Set :=
   | Const (n : nat)
   | Plus (e1 e2 : arith)
@@ -18,7 +19,8 @@ Module ArithWithConstants.
   (* Here are a few examples of specific expressions. *)
   Example ex1 := Const 42.
   Example ex2 := Plus (Const 1) (Times (Const 2) (Const 3)).
-
+                 (* 1 + 2 * 3 *)
+                 
   (* size is the number of nodes in the AST *)
   Fixpoint size (e : arith) : nat :=
     match e with
@@ -263,8 +265,8 @@ Module ArithWithVariables.
 
 
 
-
-
+  Locate "==v".
+  Print var_eq.
   (* We use an infix operator [==v] for equality tests on strings.*)
   Fixpoint substitute (inThis : arith) (replaceThis : var) 
                       (withThis : arith) : arith :=
@@ -290,6 +292,7 @@ Module ArithWithVariables.
       linear_arithmetic.
 
     - simplify.
+      Print cases.
       cases (x ==v replaceThis).
       (* [cases e]: break the proof into one case for each 
        * constructor that might have been used to build the 
@@ -332,7 +335,7 @@ Module ArithWithVariables.
     - simplify.
       cases (x ==v replaceThis).
       linear_arithmetic.
-      simplify.
+      simplify. (* XXX *)
       cases withThis; simplify; linear_arithmetic.
 
     - simplify.
@@ -388,6 +391,7 @@ Module ArithWithVariables.
     depth (substitute inThis replaceThis withThis) <= 
     depth inThis + depth withThis.
   Proof.
+
     induct inThis; simplify;
     (* [try] tactical attempts to apply a tactic, and ignores failures *)
     try match goal with
@@ -492,8 +496,7 @@ Module ArithWithVariables.
    * Such a pattern matches *any* [match] in a goal, over any type! *)
   Theorem size_constantFold : forall e, size (constantFold e) <= size e.
   Proof.
-   (*
-    induct e.
+    (* induct e.
     - simplify. linear_arithmetic.
     - simplify. linear_arithmetic.
     - simplify. cases (constantFold e1). cases n. cases (constantFold e2). 
@@ -516,16 +519,17 @@ Module ArithWithVariables.
   Theorem commuter_constantFold : forall e, 
     commuter (constantFold e) = constantFold (commuter e).
   Proof.
-  
-    time (induct e; simplify;
-    repeat match goal with
+    
+    time (induct e; simplify; 
+    repeat match goal with 
            | [ |- context[match ?E with _ => _ end] ] => 
-               cases E; simplify; try equality
+             cases E; simplify; try equality
            | [ H : ?f _ = ?f _ |- _ ] => 
                invert H; try linear_arithmetic
            | [ |- ?f _ = ?f _ ] => 
                f_equal; try linear_arithmetic
-           end).
+           end;
+    try equality).
   
     (* [f_equal]: when the goal is an equality between two applications of
      *   the same function, switch to proving that the function arguments are

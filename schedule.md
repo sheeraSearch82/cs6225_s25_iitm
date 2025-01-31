@@ -10,5 +10,5 @@ permalink: /schedule/
 | 2 | Functional Programming | 17/01, 20/01 | [Coq](https://github.com/kayceesrk/cs6225_s25_iitm/blob/main/lectures/FunctionalProgramming.v) | |
 | 3 | Logic | 20/01, 22/01, 23/01 | [Coq](https://github.com/kayceesrk/cs6225_s25_iitm/blob/main/lectures/Logic.v) | |
 | 4 | Induction | 23/01, 24/01, 27/01 | [Coq](https://github.com/kayceesrk/cs6225_s25_iitm/blob/main/lectures/Induction.v) | |
-| 5 | BasicSyntax | | [Coq](https://github.com/kayceesrk/cs6225_s25_iitm/blob/main/lectures/BasicSyntax.v) | |
-| 6 | Interpreters | | [Coq](https://github.com/kayceesrk/cs6225_s25_iitm/blob/main/lectures/Interpreters.v),  [slides (key)]({{site.baseurl}}/lectures/1_interpreters.key), [slides (pdf)]({{site.baseurl}}/lectures/1_interpreters.pdf) | |
+| 5 | BasicSyntax | 29/01, 30/01, 31/01 | [Coq](https://github.com/kayceesrk/cs6225_s25_iitm/blob/main/lectures/BasicSyntax.v) | |
+| 6 | Interpreters | 31/01 | [Coq](https://github.com/kayceesrk/cs6225_s25_iitm/blob/main/lectures/Interpreters.v),  [slides (key)]({{site.baseurl}}/lectures/1_interpreters.key), [slides (pdf)]({{site.baseurl}}/lectures/1_interpreters.pdf) | |

@@ -16,6 +16,8 @@ Example ex1 := Const 42.
 Example ex2 := Plus (Var "y") (Times (Var "x") (Const 3)).
 
 Definition valuation := fmap var nat.
+
+Print fmap.
 (* That is, the domain is [var] (a synonym for [string]) and the codomain/range
  * is [nat]. *)
 
@@ -56,12 +58,16 @@ Proof.
   equality.
 Qed.
 
+Print ex2.
+
 Theorem interp_ex2 : interp ex2 valuation0 = 54.
 Proof.
   unfold valuation0.
   simplify.
   equality.
 Qed.
+
+(* stopped here 31/01 *)
 
 (* Here's the silly transformation we defined last time. *)
 Fixpoint commuter (e : arith) : arith :=
@@ -85,24 +91,65 @@ Proof.
 
   equality.
 
-  linear_arithmetic.
+  linear_arithmetic. (* equality does not work *)
 
-  linear_arithmetic.
+  linear_arithmetic. (* equality also works *)
 
   rewrite IHe1.
   rewrite IHe2.
-  ring.
+  ring.          (* linear_arithmetic works but not equality *)
 Qed.
 (* Well, that's a relief! ;-) *)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+(* See slides *)
 
 (* Let's also revisit substitution. *)
 Fixpoint substitute (inThis : arith) (replaceThis : var) (withThis : arith) : arith :=
   match inThis with
   | Const _ => inThis
   | Var x => if x ==v replaceThis then withThis else inThis
-  | Plus e1 e2 => Plus (substitute e1 replaceThis withThis) (substitute e2 replaceThis withThis)
-  | Minus e1 e2 => Minus (substitute e1 replaceThis withThis) (substitute e2 replaceThis withThis)
-  | Times e1 e2 => Times (substitute e1 replaceThis withThis) (substitute e2 replaceThis withThis)
+  | Plus e1 e2 => 
+      Plus (substitute e1 replaceThis withThis) 
+           (substitute e2 replaceThis withThis)
+  | Minus e1 e2 => 
+      Minus (substitute e1 replaceThis withThis) 
+            (substitute e2 replaceThis withThis)
+  | Times e1 e2 => 
+      Times (substitute e1 replaceThis withThis) 
+            (substitute e2 replaceThis withThis)
   end.
 
 Theorem substitute_ok : forall v x e' e,
@@ -185,7 +232,7 @@ Qed.
 
 
 
-
+(* See slides *)
 
 (* Of course, we're going to get bored if we confine ourselves to arithmetic
  * expressions for the rest of our journey.  Let's get a bit fancier and define
