@@ -1,0 +1,11 @@
+{
+  "name": "CS6225 F* devcontainer (from DockerHub)",
+  "image": "kayceesrk/fstar-devcontainer:latest",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "FStarLang.fstar-vscode-assistant"
+      ]
+    }
+  }
+}
