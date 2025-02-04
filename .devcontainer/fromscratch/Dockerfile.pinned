@@ -3,25 +3,27 @@ FROM ocaml/opam:ubuntu-24.04-ocaml-4.14
 ENV OPAMJOBS=16
 RUN sudo apt update
 RUN sudo apt install -y wget unzip pkg-config libgmp-dev libssl-dev \
-		python3 python3-pip python3-distutils-extra
+    python3 python3-pip python3-distutils-extra
 
 RUN opam install z3.4.13.3 -y
 
-RUN wget https://github.com/FStarLang/FStar/archive/8a81ab2f1f5c5b250942aad9c1ddfc81219154ea.zip && \
-    unzip 8a81ab2f1f5c5b250942aad9c1ddfc81219154ea.zip && \
-    cd FStar-8a81ab2f1f5c5b250942aad9c1ddfc81219154ea && \
-		opam install . -y --deps-only
-RUN cd FStar-8a81ab2f1f5c5b250942aad9c1ddfc81219154ea && \
+RUN git clone https://github.com/FStarLang/FStar --branch master && \
+    cd FStar && \
+    git checkout 8a81ab2 && \
+    opam install . -y --deps-only
+RUN cd FStar && \
     opam install . -y
 
-#RUN wget https://github.com/kayceesrk/karamel/archive/3168af8ebe065f664c6f1c22dfdf8519885e58f6.zip && \
-#    unzip 3168af8ebe065f664c6f1c22dfdf8519885e58f6.zip && \
-#    cd karamel-3168af8ebe065f664c6f1c22dfdf8519885e58f6 && \
-#    opam install . -y --deps-only
-#RUN opam install . -y
+RUN git clone https://github.com/kayceesrk/karamel && \
+		cd karamel && \
+    git checkout 3168af8 && \
+		opam install . -y --deps-only
+RUN cd karamel && \
+		opam install . -y
 
-#RUN wget https://github.com/FStarLang/pulse/archive/de51e6082436848c68fa061269f28641025a411d.zip && \
-#    unzip de51e6082436848c68fa061269f28641025a411d.zip && \
-#    cd pulse-de51e6082436848c68fa061269f28641025a411d && \
-#    opam install . -y --deps-only
-#RUN opam install . -y
+RUN git clone https://github.com/FStarLang/pulse && \
+		cd pulse && \
+    git checkout de51e60 && \
+		opam install . -y --deps-only
+RUN cd pulse && \
+		opam install . -y

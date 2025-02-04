@@ -22,7 +22,7 @@ Print fmap.
  * is [nat]. *)
 
 (* The interpreter is a fairly innocuous-looking recursive function. *)
-Fixpoint interp (e : arith) (v : valuation) : nat :=
+Fixpoint interp (e : arith) : nat :=
   match e with
   | Const n => n
   | Var x =>
@@ -269,6 +269,8 @@ Definition run1 (i : instruction) (v : valuation) (stack : list nat) : list nat 
     | _ => stack (* arbitrary behavior in erroneous case *)
     end
   end.
+  
+  (* STOPPED 03/02 *)
 
 (* That function explained how to run one instruction.
  * Here's how to run several of them. *)
