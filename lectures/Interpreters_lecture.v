@@ -22,7 +22,7 @@ Print fmap.
  * is [nat]. *)
 
 (* The interpreter is a fairly innocuous-looking recursive function. *)
-Fixpoint interp (e : arith) : nat :=
+Fixpoint interp (e : arith) (v : valuation) : nat :=
   match e with
   | Const n => n
   | Var x =>
@@ -396,7 +396,7 @@ Qed.
 
 
 
-
+(* See slides *)
 
 (* Let's get a bit fancier, moving toward the level of general-purpose
  * imperative languages.  Here's a language of commands, building on the
