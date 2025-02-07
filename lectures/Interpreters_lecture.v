@@ -473,6 +473,8 @@ Example factorial :=
     "output" <- "output" * "input";
     "input" <- "input" - 1
   done.
+  
+Print factorial.
 
 (* Now we prove that it really computes factorial.
  * First, a reference implementation as a functional program. *)
@@ -500,6 +502,7 @@ Lemma factorial_ok' : forall input output v,
 Proof.
   induct input; simplify.
 
+  (* f and g *)
   maps_equal.
   (* [maps_equal]: prove that two finite maps are equal by considering all
    *   the relevant cases for mappings of different keys. *)
