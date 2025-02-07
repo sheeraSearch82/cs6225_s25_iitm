@@ -16,6 +16,12 @@ Set Implicit Arguments.
 Definition real_plus := Eval compute in plus.
 Print real_plus.
 
+Fixpoint add' (n m : nat) {struct n} : nat :=
+  match n with
+  | 0 => m
+  | S n' => S (add' n' m) (* add n' m = r *)
+  end.
+
 (* recursive:fp :: inductive:logic *)
 
 Inductive plusR : nat -> nat -> nat -> Prop :=
@@ -33,13 +39,17 @@ Check list_ind.
 
 Check plusR_ind.
 
-(* Let's prove that when [n + m = r] then [plusR n m r] holds. *)
+(* Let's prove that 
+   
+     if numbers are related by addition, then they are related by plusR. *)
 Theorem plus_plusR : forall n m,
   plusR n m (n + m).
 Proof.
   induct n; simplify.
 
   constructor.
+  
+  
   (* new tactic [constructor]
   
      Applies the corresponding constructor definition *)
@@ -61,9 +71,15 @@ Local Hint Constructors plusR : core.
 Theorem plus_plusR_snazzy : forall n m,
   plusR n m (n + m).
 Proof.
-  induct n; simplify; debug auto.
+  induct n; simplify; auto.
+Restart.
+  induct n; simplify; info_auto.
 Qed.
 
+
+(* Let's prove that 
+   
+     if numbers are related by plusR, then they are related by addition. *)
 Theorem plusR_plus : forall n m r,
   plusR n m r
   -> r = n + m.
@@ -102,10 +118,18 @@ Proof.
   apply PlusO.
 
 Restart.
-  (* debug *) auto.
+  auto.
+Restart.
+  info_auto.
 Qed.
 
 Print four_plus_three'.
+
+Check PlusO 3.
+Check PlusS (PlusO 3).
+Check PlusS (PlusS (PlusO 3)).
+Check PlusS (PlusS (PlusS (PlusO 3))).
+Check PlusS (PlusS (PlusS (PlusS (PlusO 3)))).
 
 (* Let us try the same approach on a slightly more complex goal. *)
 
@@ -195,29 +219,34 @@ Qed.
 
 (* This proof gives us our first example where logic programming simplifies
  * proof search compared to functional programming.  In general, functional
- * programs are only meant to be run in a single direction; a function has
- * disjoint sets of inputs and outputs.  In the last example, we effectively ran
- * a logic program backwards, deducing an input that gives rise to a certain
- * output.  The same works for deducing an unknown value of the other input. *)
+ * programs are only meant to be 
+ *
+ *               run in a single direction; 
+ *
+ * a function has disjoint sets of inputs and outputs.  In the last example, we 
+ * effectively 
+ *
+ *               ran a logic program backwards, 
+ *
+ * deducing an input that gives rise to a certain output. The same works for 
+ * deducing an unknown value of the other input. *)
 
 Example seven_minus_four' : exists x, plusR 4 x 7.
 Proof.
   eauto 6.
 Qed.
 
-(* By proving the right auxiliary facts, we can reason about specific functional
- * programs in the same way as we did above for a logic program.  Let us prove
- * that the constructors of [plusR] have natural interpretations as lemmas about
- * [plus].  We can find the first such lemma already proved in the standard
- * library, using the [Search] command to find a library function proving
- * an equality whose lefthand or righthand side matches a pattern with
- * wildcards. *)
+Print seven_minus_four'.
+
+(* Can we do proof search for functional programs similarly? *)
 
 Search (O + _).
 
 (* The command [Hint Immediate] asks [auto] and [eauto] to consider this lemma
  * as a candidate step for any leaf of a proof tree, meaning that all premises
  * of the rule need to match hypotheses. *)
+
+(* Will try [simpl; apply plus_0_n; trivial] *)
 
 Local Hint Immediate plus_O_n : core.
 
@@ -233,7 +262,7 @@ Qed.
 (* The command [Hint Resolve] adds a new candidate proof step, to be attempted
  * at any level of a proof tree, not just at leaves. *)
 
-Local Hint Resolve plusS : core.
+Local Hint Resolve plusS : core.  
 
 (* Now that we have registered the proper hints, we can replicate our previous
  * examples with the normal, functional addition [plus]. *)
@@ -269,15 +298,29 @@ Local Hint Resolve plusO : core.
 
 (* Note that, if we consider the inputs to [plus] as the inputs of a
  * corresponding logic program, the new rule [plusO] introduces an ambiguity.
- * For instance, a sum [0 + 0] would match both of [plus_O_n] and [plusO],
- * depending on which operand we focus on.  This ambiguity may increase the
+ * For instance, a sum [0 + 0] would match both of [plus_O_n] *) 
+ 
+ Check plus_O_n.
+ 
+(* and [plusO], *)
+ 
+ Check plusO.
+ 
+(* depending on which operand we focus on.  This ambiguity may increase the
  * number of potential search trees, slowing proof search, but semantically it
  * presents no problems, and in fact it leads to an automated proof of the
  * present example. *)
 
 Example seven_minus_four_zero : exists x, 4 + x + 0 = 7.
 Proof.
-  eauto 7.
+  info_eauto 7.
+Restart.
+  simple eapply ex_intro.
+   simple apply plusO.
+    simple apply plusS.
+     simple apply plusS.
+      simple apply plusS.
+       simple apply @eq_refl.
 Qed.
 
 (* Just how much damage can be done by adding hints that grow the space of
@@ -322,7 +365,7 @@ Local Hint Resolve eq_trans : slow.
 
 Example from_one_to_zero : exists x, 1 + x = 0.
 Proof.
-  Time eauto.
+  Time eauto 5.
   (* This [eauto] fails to prove the goal, but at least it takes substantially
    * less than the 2 seconds required above! *)
 Abort.
@@ -342,13 +385,24 @@ Example needs_trans : forall x y, 1 + x = y
   -> exists z, z + x = 3.
 Proof.
   info_eauto with slow.
+Restart.
+intro.
+intro.
+intro.
+intro.
+simple eapply ex_intro.
+ simple apply plusS.
+  simple eapply eq_trans.
+   exact H.
+   exact H0.
 Qed.
+
+Print needs_trans.
 
 (* The [info] trace shows that [eq_trans] was used in just the position where it
  * is needed to complete the proof.  We also see that [auto] and [eauto] always
  * perform [intro] steps without counting them toward the bound on proof-tree
  * depth. *)
-
 
 (** * Searching for Underconstrained Values *)
 
