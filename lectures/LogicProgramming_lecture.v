@@ -277,6 +277,8 @@ Proof.
   eauto 6.
 Qed.
 
+(* STOPPED HERE 07/02 -- teach [eapply] line number 200 *)
+
 (* This new hint database is far from a complete decision procedure, as we see in
  * a further example that [eauto] does not finish. *)
 
@@ -459,7 +461,7 @@ Proof.
    * representation of the proof, so we can see where the unification variables
    * show up. *)
 
-  Show Proof.
+  Show Proof. (* new command *)
 Abort.
 
 (* Paradoxically, we can make the proof-search process easier by constraining
@@ -591,12 +593,16 @@ Abort.
  * [n2], while the third premise can then be proved by [reflexivity], no matter
  * how each of its sides is decomposed as a tree of additions. *)
 
-Theorem EvalPlus' : forall var e1 e2 n1 n2 n, eval var e1 n1
+Theorem EvalPlus' : forall var e1 e2 n1 n2 n, 
+     eval var e1 n1
   -> eval var e2 n2
   -> n1 + n2 = n
   -> eval var (Plus e1 e2) n.
 Proof.
-  simplify; subst; auto.
+  simplify.
+  subst. (* do all substitutions of the form <term> = <var> or 
+                                              <var> = <term> *)
+  auto.
 Qed.
 
 Local Hint Resolve EvalPlus' : core.
@@ -611,7 +617,15 @@ Section use_ring.
 
   Example eval1' : forall var, eval var (Plus Var (Plus (Const 8) Var)) (2 * var + 8).
   Proof.
-    eauto.
+    info_eauto.
+  Restart.
+  intro.
+  simple eapply EvalPlus'.
+  simple apply EvalVar.
+  simple apply EvalPlus.
+  simple apply EvalConst.
+  simple apply EvalVar.
+  (*external*) ring.
   Qed.
 
   (* Now we are ready to take advantage of logic programming's flexibility by
@@ -624,6 +638,7 @@ Section use_ring.
   Qed.
 
   Print synthesize1.
+  (* See [(Plus Var (Const 7))] *)
 
   (* Here are two more examples showing off our program-synthesis abilities. *)
 
@@ -633,6 +648,7 @@ Section use_ring.
   Qed.
 
   Print synthesize2.
+  (* See [(Plus (Plus Var Var) (Const 8))] *)
 
   Example synthesize3 : exists e, forall var, eval var e (3 * var + 42).
   Proof.
@@ -640,7 +656,46 @@ Section use_ring.
   Qed.
 
   Print synthesize3.
+  (* See [(Plus (Plus Var (Plus Var Var)) (Const 42))] *)
 End use_ring.
+
+(* Rest of the lecture is left as optional self-study *)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 (* These examples show linear expressions over the variable [var].  Any such
  * expression is equivalent to [k * var + n] for some [k] and [n].  It is
@@ -652,7 +707,8 @@ End use_ring.
  * We prove a series of lemmas and add them as hints.  We have alternate [eval]
  * constructor lemmas and some facts about arithmetic. *)
 
-Theorem EvalConst' : forall var n m, n = m
+Theorem EvalConst' : forall var n m, 
+  n = m
   -> eval var (Const n) m.
 Proof.
   simplify; subst; auto.

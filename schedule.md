@@ -11,5 +11,8 @@ permalink: /schedule/
 | 3 | Logic | 20/01, 22/01, 23/01 | [Coq](https://github.com/kayceesrk/cs6225_s25_iitm/blob/main/lectures/Logic.v) | |
 | 4 | Induction | 23/01, 24/01, 27/01 | [Coq](https://github.com/kayceesrk/cs6225_s25_iitm/blob/main/lectures/Induction.v) | |
 | 5 | BasicSyntax | 29/01, 30/01, 31/01 | [Coq](https://github.com/kayceesrk/cs6225_s25_iitm/blob/main/lectures/BasicSyntax.v) | |
-| 6 | Interpreters | 31/01, 03/02 | [Coq](https://github.com/kayceesrk/cs6225_s25_iitm/blob/main/lectures/Interpreters.v),  [slides (key)]({{site.baseurl}}/lectures/1_interpreters.key), [slides (pdf)]({{site.baseurl}}/lectures/1_interpreters.pdf) | |
-| 7 | Logic Programming | | [Coq](https://github.com/kayceesrk/cs6225_s25_iitm/blob/main/lectures/LogicProgramming.v) | c.f. CS3100 Prolog parts |
+| 6 | Interpreters | 31/01, 03/02, 06/02 | [Coq](https://github.com/kayceesrk/cs6225_s25_iitm/blob/main/lectures/Interpreters.v),  [slides (key)]({{site.baseurl}}/lectures/1_interpreters.key), [slides (pdf)]({{site.baseurl}}/lectures/1_interpreters.pdf) | |
+| 7 | Logic Programming | 07/02 | [Coq](https://github.com/kayceesrk/cs6225_s25_iitm/blob/main/lectures/LogicProgramming.v) | c.f. CS3100 Prolog parts |
+| 7 | Functional Programming in F\* | 01/03, 02/03, 03/03 | [slides(key)]({{site.baseurl}}/lectures/2_fstar_functional_programming.key), [slides(pdf)]({{site.baseurl}}/lectures/2_fstar_functional_programming.pdf), [fst]({{site.baseurl}}/lectures/Fstar_functional.fst) | See F* book mentioned in [resources]({{site.baseurl}}/resources/) |
+| 8 | Verifying Functional Programs in F\* | 04/03, 06/03 (2 * 50 minutes) | [fst]({{site.baseurl}}/lectures/Fstar_verification.fst) | |
+
