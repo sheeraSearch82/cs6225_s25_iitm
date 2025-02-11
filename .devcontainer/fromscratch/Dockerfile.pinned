@@ -1,15 +1,17 @@
 FROM ocaml/opam:ubuntu-24.04-ocaml-4.14
 
 ENV OPAMJOBS=16
-RUN sudo apt update
-RUN sudo apt install -y wget unzip pkg-config libgmp-dev libssl-dev \
+USER root
+RUN apt update
+RUN apt install -y wget unzip pkg-config libgmp-dev libssl-dev \
     python3 python3-pip python3-distutils-extra
-
-RUN opam install z3.4.13.3 -y
+USER opam
 
 RUN git clone https://github.com/FStarLang/FStar --branch master && \
     cd FStar && \
-    git checkout 8a81ab2 && \
+    git checkout 8a81ab2
+RUN bash FStar/.scripts/get_fstar_z3.sh /home/opam/.opam/4.14/bin/
+RUN cd FStar && \
     opam install . -y --deps-only
 RUN cd FStar && \
     opam install . -y
