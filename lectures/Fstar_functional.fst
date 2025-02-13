@@ -34,6 +34,8 @@ let rec map f x =
 
 let l = map (fun x -> x + 1) (Cons 2 (Cons 1 Nil))
 
+(* STOPPED HERE 13/02 *)
+
 (******************************************************************************)
 
 (* Refinement Types
@@ -68,7 +70,7 @@ let incr x = x + 1
    For example, the following specification for an increment function is incorrect
    and does not type check. *)
 
-val incr2 : x:int -> y:int{ y < x}
+val incr2 : x:int -> y:int{y<x}
 (* let incr2 x = x + 1 *)
 
 (* Unlike OCaml where there can only be one type for the [incr] function, in F*
@@ -239,9 +241,10 @@ val staticChecking : unit -> ML unit
 let staticChecking () =
   let v1 = read tmp in
   let v2 = read readme in
-  (* let v3 = read passwd in (* invalid read, fails type-checking *) *)
+  // let v3 = read passwd in // invalid read, fails type-checking
   write tmp "hello!"
-  (* ; write passwd "junk" // invalid write , fails type-checking *)
+  // ; write passwd "junk" // invalid write , fails type-checking
+  // ; write readme "junk" // invalid write, fails type-checking
 
 
 
@@ -250,12 +253,16 @@ let staticChecking () =
 exception InvalidRead
 val checkedRead : filename -> ML string
 let checkedRead f =
-  if canRead f then read f else raise InvalidRead
+  if canRead f
+  then (* {canRead f} holds *) read f
+  else raise InvalidRead
 
 val checkedWrite : filename -> string -> ML unit
 exception InvalidWrite
 let checkedWrite f s =
-  if canWrite f then write f s else raise InvalidWrite
+  if canWrite f
+  then (* {canWrite f} holds *) write f s
+  else raise InvalidWrite
 
 let dynamicChecking () =
   let v1 = checkedRead tmp in
@@ -264,4 +271,4 @@ let dynamicChecking () =
   checkedWrite tmp "hello!";
   checkedWrite passwd "junk" (* this raises exception *)
 
-let main = staticChecking (); dynamicChecking ()
+let main () = staticChecking (); dynamicChecking ()
