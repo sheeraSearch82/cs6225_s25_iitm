@@ -217,6 +217,8 @@ Restart.
   info_eauto 6.
 Qed.
 
+Print seven_minus_three'.
+
 (* This proof gives us our first example where logic programming simplifies
  * proof search compared to functional programming.  In general, functional
  * programs are only meant to be 
@@ -322,7 +324,8 @@ Restart.
     simple apply plusS.
      simple apply plusS.
       simple apply plusS.
-       simple apply @eq_refl.
+       simple apply plusS.
+         simple apply plus_O_n.
 Qed.
 
 (* Just how much damage can be done by adding hints that grow the space of
@@ -399,8 +402,6 @@ simple eapply ex_intro.
    exact H0.
 Qed.
 
-Print needs_trans.
-
 (* The [info] trace shows that [eq_trans] was used in just the position where it
  * is needed to complete the proof.  We also see that [auto] and [eauto] always
  * perform [intro] steps without counting them toward the bound on proof-tree
@@ -425,7 +426,7 @@ Print length_1_2.
 (* As in the last section, we will prove some lemmas to recast [length] in
  * logic-programming style, to help us compute inputs from outputs. *)
 
-Theorem length_O : forall A, length (nil (A := A)) = O.
+Theorem length_O : forall A, length (@nil A) = O.
 Proof.
   simplify; equality.
 Qed.
@@ -436,6 +437,8 @@ Theorem length_S : forall A (h : A) t n,
 Proof.
   simplify; equality.
 Qed.
+
+Print length_S.
 
 Local Hint Resolve length_O length_S : core.
 
@@ -460,6 +463,10 @@ Proof.
    * To debug such situations, it can be helpful to print the current internal
    * representation of the proof, so we can see where the unification variables
    * show up. *)
+  
+  Unshelve.
+  exact 0.
+  exact 42.
 
   Show Proof. (* new command *)
 Abort.
@@ -563,7 +570,8 @@ Inductive exp : Set :=
 Inductive eval (var : nat) : exp -> nat -> Prop :=
 | EvalConst : forall n, eval var (Const n) n
 | EvalVar : eval var Var var
-| EvalPlus : forall e1 e2 n1 n2, eval var e1 n1
+| EvalPlus : forall e1 e2 n1 n2, 
+     eval var e1 n1
   -> eval var e2 n2
   -> eval var (Plus e1 e2) (n1 + n2).
 
@@ -571,7 +579,9 @@ Local Hint Constructors eval : core.
 
 (* We can use [auto] to execute the semantics for specific expressions. *)
 
-Example eval1 : forall var, eval var (Plus Var (Plus (Const 8) Var)) (var + (8 + var)).
+Example eval1 : forall var, 
+  eval var (Plus Var (Plus (Const 8) Var)) 
+  (var + (8 + var)).
 Proof.
   auto.
 Qed.
@@ -579,7 +589,9 @@ Qed.
 (* Unfortunately, just the constructors of [eval] are not enough to prove
  * theorems like the following, which depends on an arithmetic identity. *)
 
-Example eval1' : forall var, eval var (Plus Var (Plus (Const 8) Var)) (2 * var + 8).
+Example eval1' : forall var, 
+  eval var (Plus Var (Plus (Const 8) Var)) 
+  (2 * var + 8).
 Proof.
   eauto.
 Abort.
@@ -615,7 +627,9 @@ Section use_ring.
 
   (* Now we can return to [eval1'] and prove it automatically. *)
 
-  Example eval1' : forall var, eval var (Plus Var (Plus (Const 8) Var)) (2 * var + 8).
+  Example eval1' : forall var, 
+    eval var (Plus Var (Plus (Const 8) Var)) 
+    (2 * var + 8).
   Proof.
     info_eauto.
   Restart.
