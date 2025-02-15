@@ -70,13 +70,13 @@ let incr x = x + 1
    For example, the following specification for an increment function is incorrect
    and does not type check. *)
 
-val incr2 : x:int -> y:int{y<x}
-(* let incr2 x = x + 1 *)
+(* val incr2 : x:int -> y:int{y<x}
+let incr2 x = x + 1 *)
 
 (* Unlike OCaml where there can only be one type for the [incr] function, in F*
    there is a family of types that can be assigned to [incr] *)
 
-val incr3 : x:int -> y:int{ y >= x}
+val incr3 : x:int -> y:int{y >= x}
 let incr3 x = x + 1
 
 val incr4 : int -> int
@@ -171,6 +171,8 @@ let rec eval e =
 (* this loops forever [(fun x.x x) (fun x.x x)]*)
 let loops_forever () = eval (App (Lam 0 (App (Var 0) (Var 0)))
                                  (Lam 0 (App (Var 0) (Var 0))))
+
+(* STOPPED HERE 14/02 *)
 
 (******************************************************************************)
 

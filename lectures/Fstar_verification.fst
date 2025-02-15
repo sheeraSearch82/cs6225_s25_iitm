@@ -3,7 +3,6 @@ module Fstar_verification
 open FStar.Mul
 module List = FStar.List.Tot.Base
 
-
 (** There are two approaches to verification in F*
 
     (1) Intrinsically at definition time
@@ -19,7 +18,7 @@ let rec factorial n =
 (* We can also equivalently write pre- and post-conditions for this *)
 
 val factorial2 : x: int -> Pure int (requires (x >= 0))
-                               (ensures (fun y -> y >= 0))
+                                    (ensures (fun y -> y >= 0))
 let rec factorial2 n =
   if n = 0 then 1 else n * factorial2 (n-1)
 
