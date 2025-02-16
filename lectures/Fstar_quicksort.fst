@@ -1,7 +1,19 @@
-(* To extract the code, run the following command:
+(* This file is part of the F* tutorial. See https://fstar-lang.org/tutorial/book/part1/part1_quicksort.html.
+
+   To extract the code, run the following command:
 
    fstar.exe --codegen OCaml --z3version 4.13.3 --extract Fstar_quicksort Fstar_quicksort.fst
 
+   This will extract to Fstar_quicksort.ml.
+
+   The file `use_quicksort.ml` contains a simple example of how to use the
+   extracted code. This code should be loaded onto `utop` as follows
+
+   ```
+   $ utop
+   #use "use_quicksort.ml";;
+   ```
+   This runs the code in `use_quicksort.ml` which uses the extracted code.
 *)
 module Fstar_quicksort
 
