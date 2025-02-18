@@ -1,32 +1,32 @@
-# Lectures
+# Lectures and their files
  
-0. First Day of Class
+1. First Day of Class
   + 0_first_day_of_class.key
-1. Functional Programming in Coq
+2. Functional Programming in Coq
   + FunctionalProgramming.v
-  + FunctionalProgramming.html
-2. Logic 
+  + FunctionalProgramming_lecture.v
+3. Logic 
   + Logic.v
-  + Logic.html
-3. Induction Principles
+  + Logic_lecture.v
+4. Induction Principles
   + Induction.v
-  + Induction.html
-4. Basic Syntax
+  + Induction_lecture.v
+5. Basic Syntax
   + BasicSyntax.v
-5. Interpreters
+  + BasicSyntax_lecture.v
+6. Interpreters
   + Interpreters.v
-6. Logic Programming
+  + Interpreters_lecture.v
+  + 1_interpreters.key
+  + 1_interpreters.pdf
+7. Logic Programming
   + LogicProgramming.v
-7. Transition Systems
-  + TransitionSystems.v
-9. OperationalSemantics
-  + OperationalSemantics.v
-10. Lambda Calculus
-  + LambdaCalculus.v
-11. Hoare Logic
-  + HoareLogic.v
-12. Functional Programming in F\*
+  + LogicProgramming_lecture.v
+8. Functional Programming in F\*
   + fstar_functional.fst
-  + 1_fstar_functional_programming.key
-13. Verifying Functional Programs in F\*
+  + 2_fstar_functional_programming.key
+  + 2_fstar_functional_programming.pdf
+9. Verifying Functional Programs in F\*
   + fstar_verification.fst
+  + fstar_quicksort.fst
+  + use_quicksort.ml

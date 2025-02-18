@@ -111,7 +111,7 @@ let rec append_len l1 l2 =
      ; assert (length (append2 l1 l2) = length l2)
      ; assert (length l1 + length l2 = length l2)
    *)
-
+  //STOPPED HERE 17/02
   | x::xs -> (* Inductive Case *)
 
   (* To show: len (append2 (x::xs) l2) = length (x::xs) + length l2 *)
@@ -311,6 +311,15 @@ let rec insert_sorted a l = match l with
 
 *)
 
+(*
+val sorted_leq :
+  x:int ->
+  xs:list int ->
+  Lemma (requires (sorted (x::xs)))
+        (ensures (forall y. mem y xs ==> x <= y))
+let sorted_leq x xs = ()
+*)
+
 val insert_sorted_ :
   a:int ->
   l:list int{sorted l} ->
@@ -439,6 +448,7 @@ let root tr = match tr with
   | Leaf -> None
   | Node v _ _ -> Some v
 
+(*
 val swivel : tr:tree -> r:tree{rightmost tr = leftmost r}
 let rec swivel tr =
   match tr with
@@ -448,10 +458,11 @@ let rec swivel tr =
       let ih2 = rightmost rt = leftmost (swivel rt) in
       assert (ih1);
       assert (ih2);
-      admitP (root rt = root (swivel rt));
+      //admitP (root rt = root (swivel rt));
       let r = Node v (swivel rt) (swivel lt) in
       assert (ih1 /\ ih2 ==>  rightmost tr = leftmost r);
       r
+*)
 
 val swivel2 :
   tr:tree ->
