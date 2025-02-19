@@ -1,4 +1,4 @@
-module RevString
+module RevSeq
 
 open FStar.List.Tot
 open FStar.Seq
@@ -24,3 +24,6 @@ let rec rev_seq' s i =
     s
 
 let rev_seq s = rev_seq' s 0
+
+val rev_lemma : #a:eqtype -> s:seq a -> Tot (rev_list (seq_to_list s) = seq_to_list (rev_seq s))
+let rev_lemma s = admit ()
