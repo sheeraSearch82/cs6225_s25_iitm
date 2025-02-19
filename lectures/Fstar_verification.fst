@@ -124,6 +124,31 @@ let rec append_len l1 l2 =
   (*     length (append2 xs l2) = length xs + length l2 |=
      1 + length (append2 xs l2) = (1 + length xs) + length l2 *)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 (** Lemma Syntactic Sugar
 
     Lemma (post) = Pure unit (requires True) (ensures (fun _ -> post))
@@ -188,7 +213,7 @@ let rec rev_snoc (#a:Type) l h =
     (* simplify: rec_post |= rev ((x::xs) @ [h]) == h::(snoc (rev xs) x) *)
     (* simplify: rec_post |= rev (x::(xs @ [h])) == h::((rev xs) @ [x]) *)
     (* simplify: rec_post |= snoc (rev (xs @ [h])) x == h::((rev xs) @ [x]) *)
-    (* rewrite : rec_post |= snoc (h::rev xs) x == h::((rev xs) @ [x]) *)
+    (* rewrite using IH: rec_post |= snoc (h::rev xs) x == h::((rev xs) @ [x]) *)
     (* simplify : rec_post |= (h::rev xs) @ [x] == h::((rev xs) @ [x]) *)
     (* simplify : rec_post |= h::(rev xs @ [x]) == h::((rev xs) @ [x]) *)
 
@@ -253,6 +278,8 @@ let rec fact_same n =
   if n = 0 then ()
   else fact_same (n-1)
 
+(* STOPPED HERE 19/02 *)
+
 (******************************************************************************)
 
 (** Insertion Sort
@@ -281,6 +308,7 @@ let rec insert_sorted a l = match l with
      else
        x::insert_sorted a xs
 *)
+
 (*
 val insert_sorted :
   a:int ->
@@ -305,21 +333,22 @@ let rec insert_sorted a l = match l with
 (* admit ()
    admitP (P1) *)
 
-(* Suprisingly, from the definition of [sorted], we don't automatically get the proof that
+(* Surprisingly, from the definition of [sorted], we don't automatically get
+   the proof that
 
    [sorted (x::xs) ==> (forall y. mem y xs ==> x <= y)]
-
 *)
 
 (*
-val sorted_leq :
+val sorted_smaller_lemma:
   x:int ->
   xs:list int ->
   Lemma (requires (sorted (x::xs)))
         (ensures (forall y. mem y xs ==> x <= y))
-let sorted_leq x xs = ()
+let sorted_smaller_lemma x xs = ()
 *)
 
+(*
 val insert_sorted_ :
   a:int ->
   l:list int{sorted l} ->
@@ -336,9 +365,11 @@ let rec insert_sorted_ a l = match l with
        assert (a > x);
        let r = x::stl in
        assert (forall x. mem x r <==> x = a \/ mem x l);
-       //assert (sorted r);
-       admitP(forall y. mem y xs ==> x <= y);
+       assert (x < a);
+       //admitP(forall y. mem y xs ==> x <= y); (* Showing [admitP] *)
+       assert (sorted r);
        r
+*)
 
 val sorted_smaller_:
   x:int ->
@@ -346,22 +377,38 @@ val sorted_smaller_:
   m:int ->
   Lemma (requires (sorted (x::xs) /\ mem m xs))
         (ensures (x <= m))
-let rec sorted_smaller_ x xs m = match xs with
-    | [] -> ()
-    | y::ys -> if y=m then () else sorted_smaller_ x ys m
-
-(* Proof engineering: show how [admit] works *)
+let rec sorted_smaller_ x xs m =
+  match xs with
+  | [] -> ()
+    // sorted (x::[]) /\ mem m [] |= x <= m
+    // sorted (x::[]) /\ False |= x <= m
+  | y::ys ->
+    if y=m
+    then ()
+      // y = m /\ sorted (x::y::ys) /\ mem m (y::ys) |= x <= m
+      // subst: sorted (x::m::ys) |= x <= m
+      // simplify: x <= m /\ sorted (m::ys) |= x <= m
+    else
+      // y != m /\ sorted (x::y::ys) /\ mem m (y::ys) |= x <= m
+      // invert: sorted (x::y::ys) /\ mem m ys |= x <= m
+      // simplify: x <= y /\ sorted (y::ys) /\ mem m ys |= x <= m
+      sorted_smaller_ x ys m
+      // preconditions: (1) sorted (x::ys) <== x <= y /\ sorted (y::ys) (by assumption)
+      //                (2) mem m ys (by assumption)
+      // postcondition: x <= m (QED)
 
 val sorted_smaller:
   x:int ->
   xs:list int ->
   Lemma (requires (sorted (x::xs)))
         (ensures (forall y. mem y xs ==> x <= y))
-        (decreases (length (x::xs)))
+        (decreases (length (x::xs))) // interesting termination measure
 let rec sorted_smaller x xs =
   match xs with
   | [] -> ()
-  | y::ys -> sorted_smaller_ x xs y; sorted_smaller y ys
+  | y::ys ->
+      sorted_smaller_ x xs y; //Proves x <= y
+      sorted_smaller y ys //Proves the rest of the list
 
 val insert_sorted__ :
   a:int ->
@@ -403,7 +450,9 @@ let rec insert_sorted a l = match l with
        x::insert_sorted a xs
 
 (* Insertion sort *)
-val sort : l:list int -> Tot (m:list int{sorted m /\ (forall x. mem x l == mem x m)})
+val sort :
+  l:list int ->
+  Tot (m:list int{sorted m /\ (forall x. mem x l == mem x m)})
 let rec sort l = match l with
     | [] -> []
     | x::xs -> insert_sorted x (sort xs)
