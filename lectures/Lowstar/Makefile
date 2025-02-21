@@ -5,7 +5,7 @@ INCLUDE_DIR = .
 FSTAR = fstar.exe
 KRML = krml
 
-TARGET = exe/Impl.HelloWorld.exe
+TARGET = exe/Impl.HelloWorld.exe exe/Math.exe
 
 # Phony targets
 .PHONY: all clean krml
