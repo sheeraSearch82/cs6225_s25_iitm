@@ -53,10 +53,10 @@ Inductive fact_step : fact_state -> fact_state -> Prop :=
 
 
 
+(* STOPPED HERE 24/02 *)
 
 
-
-(* Transitive-reflexive closure*)
+(* Transitive-reflexive closure (see slides) *)
 
 Inductive trc {A} (R : A -> A -> Prop) : A -> A -> Prop :=
 | TrcRefl : forall x, trc R x x
@@ -74,16 +74,18 @@ Theorem trc_trans : forall {A} (R : A -> A -> Prop) x y,
 Proof.
   induct 1; simplify.
   - assumption.
-  (* x -> y -*-> z -*-> z0 *)
-  - eapply TrcFront.
+  - (* x -> y -*-> z -*-> z0 *)
+    eapply TrcFront.
     eassumption.
     apply IHtrc.
     assumption.
 Qed.
 
-(* Transitive-reflexive closure is so common that it deserves a shorthand notation! *)
-Set Warnings "-notation-overridden". (* <-- needed while we play with defining one
-                                      * of the book's notations ourselves locally *)
+(* Transitive-reflexive closure is so common that it deserves a shorthand 
+   notation! *)
+Set Warnings "-notation-overridden". 
+  (* <-- needed while we play with defining one
+   * of the book's notations ourselves locally *)
 Notation "R ^*" := (trc R) (at level 0).
 
 (* Now let's use it to execute the factorial program. *)
@@ -388,6 +390,7 @@ Theorem fact_invariant_ok : forall original_input,
                (fact_invariant original_input).
 Proof.
   simplify.
+  (* Establish by induction *)
   apply invariant_induction; simplify.
 
   (* Step 1: invariant holds at the start. (base case) *)
@@ -404,7 +407,8 @@ Proof.
    * can be ruled out for this case, so we get two subgoals from one. *)
 
   simplify.
-  linear_arithmetic.
+  rewrite H.
+  ring.
 
   simplify.
   rewrite H.
@@ -491,11 +495,13 @@ Qed.
 
 (** * A simple example of another program as a state transition system *)
 
-(* We'll formalize this pseudocode for one thread of a concurrent, shared-memory program.
-  lock();
-  local = global;
-  global = local + 1;
-  unlock();
+(* We'll formalize this pseudocode for one thread of a concurrent, 
+   shared-memory program.
+
+   lock();
+   local = global;
+   global = local + 1;
+   unlock();
 *)
 
 (* This inductive state effectively encodes all possible combinations of two
@@ -523,6 +529,7 @@ Record threaded_state shared private := {
 }.
 
 Definition increment_state := threaded_state inc_state increment_program.
+
 
 (* Now a routine definition of the three key relations of a transition system.
  * The most interesting logic surrounds saving the counter value in the local
@@ -561,6 +568,44 @@ Definition increment_sys := {|
 |}.
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 (** * Running transition systems in parallel *)
 
 (* That last example system is a cop-out: it only runs a single thread.  We want
@@ -569,20 +614,20 @@ Definition increment_sys := {|
  * system the type of shared state remains the same, we take the Cartesian
  * product of the sets of private state. *)
 
-Inductive parallel_init shared private1 private2
-  (init1 : threaded_state shared private1 -> Prop)
-  (init2 : threaded_state shared private2 -> Prop)
-  : threaded_state shared (private1 * private2) -> Prop :=
+Inductive parallel_init shared pvt1 pvt2
+  (init1 : threaded_state shared pvt1 -> Prop)
+  (init2 : threaded_state shared pvt2 -> Prop)
+  : threaded_state shared (pvt1 * pvt2) -> Prop :=
 | Pinit : forall sh pr1 pr2,
   init1 {| Shared := sh; Private := pr1 |}
   -> init2 {| Shared := sh; Private := pr2 |}
   -> parallel_init init1 init2 {| Shared := sh; Private := (pr1, pr2) |}.
 
-Inductive parallel_step shared private1 private2
-          (step1 : threaded_state shared private1 -> threaded_state shared private1 -> Prop)
-          (step2 : threaded_state shared private2 -> threaded_state shared private2 -> Prop)
-          : threaded_state shared (private1 * private2)
-            -> threaded_state shared (private1 * private2) -> Prop :=
+Inductive parallel_step shared pvt1 pvt2
+          (step1 : threaded_state shared pvt1 -> threaded_state shared pvt1 -> Prop)
+          (step2 : threaded_state shared pvt2 -> threaded_state shared pvt2 -> Prop)
+          : threaded_state shared (pvt1 * pvt2)
+            -> threaded_state shared (pvt1 * pvt2) -> Prop :=
 | Pstep1 : forall sh pr1 pr2 sh' pr1',
   (* First thread gets to run. *)
   step1 {| Shared := sh; Private := pr1 |} {| Shared := sh'; Private := pr1' |}
@@ -594,9 +639,9 @@ Inductive parallel_step shared private1 private2
   -> parallel_step step1 step2 {| Shared := sh; Private := (pr1, pr2) |}
                {| Shared := sh'; Private := (pr1, pr2') |}.
 
-Definition parallel shared private1 private2
-           (sys1 : trsys (threaded_state shared private1))
-           (sys2 : trsys (threaded_state shared private2)) := {|
+Definition parallel shared pvt1 pvt2
+           (sys1 : trsys (threaded_state shared pvt1))
+           (sys2 : trsys (threaded_state shared pvt2)) := {|
   Initial := parallel_init sys1.(Initial) sys2.(Initial);
   Step := parallel_step sys1.(Step) sys2.(Step)
 |}.
@@ -604,7 +649,45 @@ Definition parallel shared private1 private2
 (* Example: composing two threads of the kind we formalized earlier *)
 Definition increment2_sys := parallel increment_sys increment_sys.
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 (* Let's prove that the counter is always 2 when the composed program terminates. *)
+
+Print increment_program.
 
 (* First big idea: the program counter of a thread tells us how much it has
  * added to the shared counter so far. *)

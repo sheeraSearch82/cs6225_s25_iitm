@@ -25,7 +25,7 @@ let abs2 (x: Int32.t): option Int32.t =
   else
     Some (0l -^ x)
 
-(* Algebraic data types are compiled to tagged enums 
+(* Algebraic data types are compiled to tagged enums
 
 typedef enum { FStar_Pervasives_Native_None, FStar_Pervasives_Native_Some }
 FStar_Pervasives_Native_option__int32_t_tags;
