@@ -166,9 +166,10 @@ Record trsys state := {
  * Note that [state] is a polymorphic type parameter. *)
 
 (* The example of our factorial program: *)
-Definition factorial_sys (original_input : nat) : trsys fact_state := {|
-  Initial := fact_init original_input;
-  Step := fact_step
+Definition factorial_sys (original_input : nat) : 
+  trsys fact_state := {|
+    Initial := fact_init original_input;
+    Step := fact_step
 |}.
 
 (* A useful general notion for transition systems: reachable states *)
@@ -241,16 +242,20 @@ Inductive reachable {state} (sys : trsys state) (st : state) : Prop :=
 
   
 
-(* To prove that our state machine is correct, we rely on the crucial technique
- * of *invariants*.  What is an invariant?  Here's a general definition, in
- * terms of an arbitrary transition system. *)
+(* To prove that our state machine is correct, we rely on 
+   the crucial technique of *invariants*.  
+  
+   What is an invariant?  
+   
+   Here's a general definition, in terms of an arbitrary 
+   transition system. *)
 Definition invariantFor {state} 
   (sys : trsys state) (invariant : state -> Prop) :=
     forall s, sys.(Initial) s
               -> forall s', sys.(Step)^* s s'
                             -> invariant s'.
-(* That is, when we begin in an initial state and take any number of steps, the
- * place we wind up always satisfies the invariant. *)
+(* That is, when we begin in an initial state and take any 
+   number of steps, the place we wind up always satisfies the invariant. *)
 
 
 
@@ -727,7 +732,7 @@ Inductive increment2_invariant :
   -> instruction_ok pr2 pr1
   -> increment2_invariant {| Shared := shared_from_private pr1 pr2; Private := (pr1, pr2) |}.
 
-(** It's convenient to prove this alternative equality-based "constructor" for the invariant. *)
+(** It's convenient to prove this alternative equality-based "constructor" for the invariant. c.f: think back to Logic Programming lecture where we replaced a concrete [n1 + n2] with an arbitrary [n]. *)
 Lemma Inc2Inv' : forall sh pr1 pr2,
   sh = shared_from_private pr1 pr2
   -> instruction_ok pr1 pr2
@@ -744,161 +749,135 @@ Theorem increment2_invariant_ok : invariantFor increment2_sys increment2_invaria
 Proof.
   apply invariant_induction; simplify.
 
-  invert H.
-  invert H0.
-  invert H1.
-  apply Inc2Inv'.
+  - (* Base case *)
+    invert H.
+    Print increment_init.
+    invert H0.
+    invert H1.
+    apply Inc2Inv'.
 
-  unfold shared_from_private.
-  simplify.
-  equality.
+    + unfold shared_from_private.
+      simplify.
+      equality.
 
-  simplify.
-  propositional.
+    + simplify. propositional.
 
-  simplify.
-  propositional.
+    + simplify. propositional.
 
-  invert H.
-  invert H0.
+  - (* Inductive case *)
+    Print increment2_invariant. 
+    invert H.
+    Print parallel_step.
+    invert H0.
 
-  invert H6; simplify.
+    + (* Thread 1 takes a step *)
+      invert H6; simplify.
+      * cases pr2; simplify.
+        
+        apply Inc2Inv'; unfold shared_from_private; simplify.
+        equality. equality. equality.
 
-  cases pr2; simplify.
+        equality.
+        (* Note that [equality] derives a contradiction 
+           from [false = true]! *)
+        equality.
+        equality.
 
-  apply Inc2Inv'; unfold shared_from_private; simplify.
-  equality.
-  equality.
-  equality.
+        apply Inc2Inv'; unfold shared_from_private; simplify.
+        equality. equality. equality.
 
-  equality.
-  (* Note that [equality] derives a contradiction from [false = true]! *)
-  equality.
-  equality.
+      * cases pr2; simplify.
 
-  apply Inc2Inv'; unfold shared_from_private; simplify.
-  equality.
-  equality.
-  equality.
+        apply Inc2Inv'; unfold shared_from_private; simplify.
+        equality. equality. equality.
 
-  cases pr2; simplify.
+        equality. equality. equality.
 
-  apply Inc2Inv'; unfold shared_from_private; simplify.
-  equality.
-  equality.
-  equality.
+        apply Inc2Inv'; unfold shared_from_private; simplify.
+        equality. equality. equality.
 
-  equality.
-  equality.
-  equality.
+      * cases pr2; simplify.
+      
+        apply Inc2Inv'; unfold shared_from_private; simplify.
+        equality. equality. equality.
 
-  apply Inc2Inv'; unfold shared_from_private; simplify.
-  equality.
-  equality.
-  equality.
+        equality. equality. equality.
 
-  cases pr2; simplify.
+        apply Inc2Inv'; unfold shared_from_private; simplify.
+        equality. equality. equality.
+        
+      * cases pr2; simplify.
+      
+        apply Inc2Inv'; unfold shared_from_private; simplify.
+        equality. equality. equality.
 
-  apply Inc2Inv'; unfold shared_from_private; simplify.
-  equality.
-  equality.
-  equality.
+        equality. equality. equality.
 
-  equality.
-  equality.
-  equality.
+        apply Inc2Inv'; unfold shared_from_private; simplify.
+        equality. equality. equality.
 
-  apply Inc2Inv'; unfold shared_from_private; simplify.
-  equality.
-  equality.
-  equality.
+    + (* Thread 2 takes a step *)
+      invert H6.
 
-  cases pr2; simplify.
+      * cases pr1; simplify.
 
-  apply Inc2Inv'; unfold shared_from_private; simplify.
-  equality.
-  equality.
-  equality.
+        apply Inc2Inv'; unfold shared_from_private; simplify.
+        equality. equality. equality.
 
-  equality.
-  equality.
-  equality.
+        equality.
+        (* Note that [equality] derives a contradiction from [false = true]! *)
+        equality.
+        equality.
 
-  apply Inc2Inv'; unfold shared_from_private; simplify.
-  equality.
-  equality.
-  equality.
+        apply Inc2Inv'; unfold shared_from_private; simplify.
+        equality. equality. equality.
 
+      * cases pr1; simplify.
 
-  invert H6.
+        apply Inc2Inv'; unfold shared_from_private; simplify.
+        equality. equality. equality.
 
-  cases pr1; simplify.
+        equality.
+        (* Note that [equality] derives a contradiction from [false = true]! *)
+        equality.
+        equality.
 
-  apply Inc2Inv'; unfold shared_from_private; simplify.
-  equality.
-  equality.
-  equality.
+        apply Inc2Inv'; unfold shared_from_private; simplify.
+        equality.
+        equality.
+        equality.
 
-  equality.
-  (* Note that [equality] derives a contradiction from [false = true]! *)
-  equality.
-  equality.
+      * cases pr1; simplify.
 
-  apply Inc2Inv'; unfold shared_from_private; simplify.
-  equality.
-  equality.
-  equality.
+        apply Inc2Inv'; unfold shared_from_private; simplify.
+        equality. equality. equality.
 
-  cases pr1; simplify.
+        equality.
+        (* Note that [equality] derives a contradiction from [false = true]! *)
+        equality.
+        equality.
 
-  apply Inc2Inv'; unfold shared_from_private; simplify.
-  equality.
-  equality.
-  equality.
+        apply Inc2Inv'; unfold shared_from_private; simplify.
+        equality.
+        equality.
+        equality.
 
-  equality.
-  (* Note that [equality] derives a contradiction from [false = true]! *)
-  equality.
-  equality.
+     * cases pr1; simplify.
 
-  apply Inc2Inv'; unfold shared_from_private; simplify.
-  equality.
-  equality.
-  equality.
+        apply Inc2Inv'; unfold shared_from_private; simplify.
+        equality.
+        equality.
+        equality.
 
-  cases pr1; simplify.
+        equality.
+        (* Note that [equality] derives a contradiction from [false = true]! *)
+        equality.
+        equality.
 
-  apply Inc2Inv'; unfold shared_from_private; simplify.
-  equality.
-  equality.
-  equality.
-
-  equality.
-  (* Note that [equality] derives a contradiction from [false = true]! *)
-  equality.
-  equality.
-
-  apply Inc2Inv'; unfold shared_from_private; simplify.
-  equality.
-  equality.
-  equality.
-
-  cases pr1; simplify.
-
-  apply Inc2Inv'; unfold shared_from_private; simplify.
-  equality.
-  equality.
-  equality.
-
-  equality.
-  (* Note that [equality] derives a contradiction from [false = true]! *)
-  equality.
-  equality.
-
-  apply Inc2Inv'; unfold shared_from_private; simplify.
-  equality.
-  equality.
-  equality.
+        apply Inc2Inv'; unfold shared_from_private; simplify.
+        equality.
+        equality.
+        equality.
 Qed.
 
 (* We can remove the repetitive proving with a more automated proof script,
@@ -946,6 +925,7 @@ Theorem increment2_sys_correct : forall s,
   -> increment2_right_answer s.
 Proof.
   simplify.
+  Check use_invariant.
   eapply use_invariant.
   apply invariant_weaken with (invariant1 := increment2_invariant).
   (* Note the use of a [with] clause to specify a quantified variable's
@@ -954,6 +934,7 @@ Proof.
   apply increment2_invariant_ok.
 
   simplify.
+  Print increment2_invariant.
   invert H0.
   unfold increment2_right_answer; simplify.
   invert H0.
