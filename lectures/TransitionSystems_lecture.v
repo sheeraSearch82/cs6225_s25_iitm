@@ -447,6 +447,10 @@ Proof.
   equality.
 Qed.
 
+
+(* Let's now make an argument that doesn't appeal to 
+   the invariant that we came up with but only the 
+   system. *)
 Theorem fact_ok : forall original_input s,
   reachable (factorial_sys original_input) s
   -> fact_final s
@@ -500,8 +504,8 @@ Qed.
 
 (** * A simple example of another program as a state transition system *)
 
-(* We'll formalize this pseudocode for one thread of a concurrent, 
-   shared-memory program.
+(* We'll formalize this pseudocode for one thread of a 
+   concurrent,  shared-memory program.
 
    lock();
    local = global;
@@ -533,7 +537,10 @@ Record threaded_state shared private := {
   Private : private
 }.
 
-Definition increment_state := threaded_state inc_state increment_program.
+Definition increment_state := 
+  threaded_state inc_state increment_program.
+  
+Print increment_state.
 
 
 (* Now a routine definition of the three key relations of a transition system.
@@ -633,23 +640,39 @@ Inductive parallel_step shared pvt1 pvt2
           (step2 : threaded_state shared pvt2 -> threaded_state shared pvt2 -> Prop)
           : threaded_state shared (pvt1 * pvt2)
             -> threaded_state shared (pvt1 * pvt2) -> Prop :=
+
+
 | Pstep1 : forall sh pr1 pr2 sh' pr1',
   (* First thread gets to run. *)
-  step1 {| Shared := sh; Private := pr1 |} {| Shared := sh'; Private := pr1' |}
+  step1 {| Shared := sh; Private := pr1 |} 
+        {| Shared := sh'; Private := pr1' |}
   -> parallel_step step1 step2 {| Shared := sh; Private := (pr1, pr2) |}
-               {| Shared := sh'; Private := (pr1', pr2) |}
+                               {| Shared := sh'; Private := (pr1', pr2) |}
+
+
 | Pstep2 : forall sh pr1 pr2 sh' pr2',
   (* Second thread gets to run. *)
-  step2 {| Shared := sh; Private := pr2 |} {| Shared := sh'; Private := pr2' |}
+  step2 {| Shared := sh; Private := pr2 |} 
+        {| Shared := sh'; Private := pr2' |}
   -> parallel_step step1 step2 {| Shared := sh; Private := (pr1, pr2) |}
-               {| Shared := sh'; Private := (pr1, pr2') |}.
+                               {| Shared := sh'; Private := (pr1, pr2') |}.
 
-Definition parallel shared pvt1 pvt2
+
+
+(* Now for the parallel transition system *)
+Definition parallel shared pvt1 pvt2 
+                    (* [shared], [pvt1] and [pvt2] are types *)
            (sys1 : trsys (threaded_state shared pvt1))
            (sys2 : trsys (threaded_state shared pvt2)) := {|
   Initial := parallel_init sys1.(Initial) sys2.(Initial);
   Step := parallel_step sys1.(Step) sys2.(Step)
 |}.
+
+Check parallel.
+
+
+Check increment_sys.
+Print increment_state.
 
 (* Example: composing two threads of the kind we formalized earlier *)
 Definition increment2_sys := parallel increment_sys increment_sys.
@@ -694,45 +717,80 @@ Definition increment2_sys := parallel increment_sys increment_sys.
 
 Print increment_program.
 
-(* First big idea: the program counter of a thread tells us how much it has
- * added to the shared counter so far. *)
+(* First big idea: the program counter of a thread tells 
+   us how much it has added to the shared counter so far. *)
 Definition contribution_from (pr : increment_program) : nat :=
   match pr with
   | Unlock | Done => 1
   | _ => 0
   end.
 
-(* Second big idea: the program counter also tells us whether a thread holds the lock. *)
+(* Second big idea: the program counter also tells us 
+   whether a thread holds the lock. *)
 Definition has_lock (pr : increment_program) : bool :=
   match pr with
   | Read | Write _ | Unlock => true
   | _ => false
   end.
 
-(* Now we see that the shared state is a function of the two program counters,
- * as follows. *)
+(* Now we see that the shared state is a function of the two 
+   program counters, as follows. *)
 Definition shared_from_private (pr1 pr2 : increment_program) :=
   {| Locked := has_lock pr1 || has_lock pr2;
      Global := contribution_from pr1 + contribution_from pr2 |}.
 
-(* We also need a condition to formalize compatibility between program counters,
- * e.g. that they shouldn't both be in the critical section at once. *)
+(* We also need a condition to formalize compatibility 
+   between program counters, e.g. that they shouldn't 
+   both be in the critical section at once. *)
 Definition instruction_ok (self other : increment_program) :=
   match self with
   | Lock | Done => True
   | Read | Unlock => has_lock other = false
-  | Write n => has_lock other = false /\ n = contribution_from other
+  | Write n => has_lock other = false /\ 
+               n = contribution_from other
   end.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 (** Now we have the ingredients to state the invariant. *)
 Inductive increment2_invariant :
   threaded_state inc_state (increment_program * increment_program) -> Prop :=
 | Inc2Inv : forall pr1 pr2,
-  instruction_ok pr1 pr2
+     instruction_ok pr1 pr2
   -> instruction_ok pr2 pr1
-  -> increment2_invariant {| Shared := shared_from_private pr1 pr2; Private := (pr1, pr2) |}.
+  -> increment2_invariant {| Shared := shared_from_private pr1 pr2; 
+                             Private := (pr1, pr2) |}.
 
-(** It's convenient to prove this alternative equality-based "constructor" for the invariant. c.f: think back to Logic Programming lecture where we replaced a concrete [n1 + n2] with an arbitrary [n]. *)
+(* It's convenient to prove this alternative equality-based 
+   "constructor" for the invariant. c.f: think back to Logic 
+   Programming lecture where we replaced a concrete 
+   [n1 + n2] with an arbitrary [n]. *)
 Lemma Inc2Inv' : forall sh pr1 pr2,
   sh = shared_from_private pr1 pr2
   -> instruction_ok pr1 pr2
@@ -744,14 +802,49 @@ Proof.
   apply Inc2Inv; assumption.
 Qed.
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 (* Now, to show it really is an invariant. *)
-Theorem increment2_invariant_ok : invariantFor increment2_sys increment2_invariant.
+Theorem increment2_invariant_ok : 
+  invariantFor increment2_sys increment2_invariant.
 Proof.
   apply invariant_induction; simplify.
 
   - (* Base case *)
+    Print parallel_init. (* has one constructor *)
     invert H.
-    Print increment_init.
+    Print increment_init. (* has one constructor *)
     invert H0.
     invert H1.
     apply Inc2Inv'.
