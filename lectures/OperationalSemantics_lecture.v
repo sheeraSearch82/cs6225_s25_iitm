@@ -225,8 +225,9 @@ Module Simple.
     || (apply EvalWhileFalse; [ simplify; equality ]).
   Ltac evaluate := simplify; try equality; repeat eval1.
 
-  Theorem factorial_2_snazzy : exists v, eval ($0 $+ ("input", 2)) factorial v
-                                         /\ v $? "output" = Some 2.
+  Theorem factorial_2_snazzy : 
+    exists v, eval ($0 $+ ("input", 2)) factorial v
+              /\ v $? "output" = Some 2.
   Proof.
     eexists; propositional.
     evaluate.
@@ -282,8 +283,9 @@ Module Simple.
 
 
 
-  (* Instead of chugging through these relatively slow individual executions,
-   * let's prove once and for all that [factorial] is correct. *)
+  (* Instead of chugging through these relatively slow individual 
+     executions, let's prove once and for all that [factorial] 
+     is correct. *)
   Fixpoint fact (n : nat) : nat :=
     match n with
     | O => 1
@@ -316,10 +318,15 @@ Module Simple.
     f_equal.
     ring.
     
-    
-    specialize (IHn (v $+ ("output", out * S n) $+ ("input", n)) (out * S n)).
+
+   
+    specialize 
+        (IHn (v $+ ("output", out * S n) $+ ("input", n)) 
+             (out * S n)).
     simplify.
+    propositional.
     first_order.
+
 
     eexists; propositional.
     econstructor.
@@ -337,6 +344,7 @@ Module Simple.
 
     (* XXX *)
 
+    
     apply H1.
     rewrite H2.
     f_equal.
@@ -348,6 +356,7 @@ Qed.
                   /\ v' $? "output" = Some (fact n).
   Proof.
     simplify.
+    unfold factorial.
     
     assert (exists v', eval (v $+ ("output", 1)) factorial_loop v'
                        /\ v' $? "output" = Some (fact n * 1)).
@@ -366,7 +375,7 @@ Qed.
     ring.
   Qed.
 
-
+(* STOPPED HERE: 06/03 *)
 
 
 
@@ -586,7 +595,7 @@ Qed.
 
 
 
-
+(* STOPPED HERE 07/03 *)
 
   (* It turns out that these two semantics styles are equivalent.  Let's prove
    * it. *)
@@ -602,7 +611,7 @@ Qed.
     (* We have 
         
         (1) c1 -> c -*-> c1'
-        (2) forall c1, c1'0. c1;;c2 -*-> c1'0;;c2
+        (2) c;;c2 -*-> c1';;c2 (* using equalities *)
     *)
     econstructor.
     econstructor.
@@ -617,7 +626,7 @@ Qed.
   Proof.
     induct 1; simplify.
 
-    constructor.
+    econstructor.
 
     econstructor.
     constructor.
@@ -661,6 +670,7 @@ Qed.
                                         -> forall v'', eval v' c' v''
                                                        -> eval v c v''.
   Proof.
+    (* Skipping proof... *)
     induct 1; simplify.
 
     invert H.
@@ -704,12 +714,16 @@ Qed.
     trivial.
 
     cases y.
+    (* We have 
+       (1) c -> c0 -*-> c'
+       (2) eval v' c' v'' -> eval v0 c0 v'' (* using equalities *)
+    *)
+    specialize (IHtrc v0 c0 v' c').
+    propositional.
     eapply small_big''.
     eassumption.
-    eapply IHtrc.
+    eapply H3.
     equality.
-    equality.
-    assumption.
   Qed.
 
   Theorem small_big : forall v c v', 
@@ -760,93 +774,6 @@ Qed.
 
 
 
-  (* Bonus material: here's how to make these proofs much more automatic.  We
-   * won't explain the features being used here. *)
-
-  Local Hint Constructors trc step eval : core.
-
-  Lemma step_star_Seq_snazzy : forall v c1 c2 v' c1',
-    step^* (v, c1) (v', c1')
-    -> step^* (v, Sequence c1 c2) (v', Sequence c1' c2).
-  Proof.
-    induct 1; eauto.
-    cases y; eauto.
-  Qed.
-
-  Local Hint Resolve step_star_Seq_snazzy : core.
-
-  Theorem big_small_snazzy : forall v c v', eval v c v'
-    -> step^* (v, c) (v', Skip).
-  Proof.
-    induct 1; eauto 6 using trc_trans.
-  Qed.
-
-  Lemma small_big''_snazzy : forall v c v' c', step (v, c) (v', c')
-                                               -> forall v'', eval v' c' v''
-                                                              -> eval v c v''.
-  Proof.
-    induct 1; simplify;
-    repeat match goal with
-           | [ H : eval _ _ _ |- _ ] => invert1 H
-           end; eauto.
-  Qed.
-
-  Local Hint Resolve small_big''_snazzy : core.
-
-  Lemma small_big'_snazzy : forall v c v' c', step^* (v, c) (v', c')
-                                              -> forall v'', eval v' c' v''
-                                                             -> eval v c v''.
-  Proof.
-    induct 1; eauto.
-    cases y; eauto.
-  Qed.
-
-  Local Hint Resolve small_big'_snazzy : core.
-
-  Theorem small_big_snazzy : forall v c v', step^* (v, c) (v', Skip)
-                                     -> eval v c v'.
-  Proof.
-    eauto.
-  Qed.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
   (** * Small-step semantics gives rise to transition systems. *)
@@ -857,10 +784,17 @@ Qed.
   |}.
 
   Theorem simple_invariant :
-    invariantFor (trsys_of ($0 $+ ("a", 1)) ("b" <- "a" + 1;; "c" <- "b" + "b"))
-                 (fun s => snd s = Skip -> fst s $? "c" = Some 4).
+    invariantFor 
+      (trsys_of ($0 $+ ("a", 1)) ("b" <- "a" + 1;; "c" <- "b" + "b"))
+      (fun s => let (v,c) := s in c = Skip -> v $? "c" = Some 4).
   Proof.
+    (* When we can phrase problems in terms of transition systems with 
+       _finitely many reachable states_, we can construct invariants
+       automatically by _exhaustive exploration of the state space_, 
+       an approach otherwise known as model checking. *)
     model_check.
+    (* We have not seen [model_check]. We skipped this lecture. 
+       But that's ok *)
   Qed.
 
   Inductive isEven : nat -> Prop :=
@@ -873,40 +807,53 @@ Qed.
       "n" <- "n" - 2
     done.
 
+  (* Enumerate all the different [cmd]s that we will encounter during
+     the execution. *)
   Definition all_programs := {
     (while "n" loop
        "a" <- "a" + "n";;
        "n" <- "n" - 2
      done),
+     
     ("a" <- "a" + "n";;
      "n" <- "n" - 2),
+    
     (Skip;;
      "n" <- "n" - 2),
+     
     ("n" <- "n" - 2),
+    
     (("a" <- "a" + "n";;
       "n" <- "n" - 2);;
      while "n" loop
        "a" <- "a" + "n";;
        "n" <- "n" - 2
      done),
+     
     ((Skip;;
       "n" <- "n" - 2);;
      while "n" loop
        "a" <- "a" + "n";;
        "n" <- "n" - 2
      done),
+     
     ("n" <- "n" - 2;;
      while "n" loop
        "a" <- "a" + "n";;
        "n" <- "n" - 2
      done),
+     
     (Skip;;
      while "n" loop
        "a" <- "a" + "n";;
        "n" <- "n" - 2
      done),
+     
     Skip
   }.
+  
+  Check all_programs.
+  Print set.
 
   Lemma isEven_minus2 : forall n, isEven n -> isEven (n - 2).
   Proof.
@@ -934,16 +881,18 @@ Qed.
 
   Lemma manually_proved_invariant' : forall n,
     isEven n
-    -> invariantFor (trsys_of ($0 $+ ("n", n) $+ ("a", 0)) (while "n" loop "a" <- "a" + "n";; "n" <- "n" - 2 done))
-                 (fun s => all_programs (snd s)
-                           /\ exists n a, fst s $? "n" = Some n
-                                          /\ fst s $? "a" = Some a
-                                          /\ isEven n
-                                          /\ isEven a).
+    -> invariantFor 
+         (trsys_of ($0 $+ ("n", n) $+ ("a", 0)) my_loop)
+         (fun s => all_programs (snd s)
+                   /\ exists n a, fst s $? "n" = Some n
+                                  /\ fst s $? "a" = Some a
+                                  /\ isEven n
+                                  /\ isEven a).
   Proof.
     simplify.
     apply invariant_induction; simplify.
 
+    (* Base case *)
     first_order.
     unfold all_programs.
     subst; simplify; equality.
@@ -952,6 +901,7 @@ Qed.
     propositional.
     constructor.
 
+    (* Inductive case *)
     invert H0.
     invert H3.
     invert H0.
@@ -1032,14 +982,16 @@ Qed.
 
   Lemma manually_proved_invariant'_snazzy : forall n,
     isEven n
-    -> invariantFor (trsys_of ($0 $+ ("n", n) $+ ("a", 0)) (while "n" loop "a" <- "a" + "n";; "n" <- "n" - 2 done))
-                 (fun s => all_programs (snd s)
-                           /\ exists n a, fst s $? "n" = Some n
-                                          /\ fst s $? "a" = Some a
-                                          /\ isEven n
-                                          /\ isEven a).
+    -> invariantFor 
+         (trsys_of ($0 $+ ("n", n) $+ ("a", 0)) my_loop)
+         (fun s => all_programs (snd s)
+                   /\ exists n a, fst s $? "n" = Some n
+                                  /\ fst s $? "a" = Some a
+                                  /\ isEven n
+                                  /\ isEven a).
   Proof.
-    simplify; apply invariant_induction; simplify; unfold all_programs in *; first_order; subst; simplify;
+    simplify; apply invariant_induction; 
+    simplify; unfold all_programs in *; first_order; subst; simplify;
     try match goal with
         | [ H : step _ _ |- _ ] => invert H; simplify
         end;
@@ -1053,12 +1005,15 @@ Qed.
 
   Theorem manually_proved_invariant : forall n,
     isEven n
-    -> invariantFor (trsys_of ($0 $+ ("n", n) $+ ("a", 0)) (while "n" loop "a" <- "a" + "n";; "n" <- "n" - 2 done))
-                 (fun s => exists a, fst s $? "a" = Some a /\ isEven a).
+    -> invariantFor 
+         (trsys_of ($0 $+ ("n", n) $+ ("a", 0)) my_loop)
+         (fun s => exists a, fst s $? "a" = Some a /\ isEven a).
   Proof.
+    Print my_loop.
     simplify.
     eapply invariant_weaken.
-    apply manually_proved_invariant'; assumption.
+    apply manually_proved_invariant'. 
+    assumption.
     first_order.
   Qed.
 
@@ -1104,27 +1059,31 @@ Qed.
 
 
 
+
+
+
+
+
+
+
+
+
+
+
   (** * Contextual small-step semantics *)
 
-  (* There is a common way to factor a small-step semantics into different parts,
-   * to make the semantics easier to understand and extend.  First, we define a
-   * notion of *evaluation contexts*, which are commands with *holes* in them. *)
+
   Inductive context :=
   | Hole
   | CSeq (C : context) (c : cmd).
 
-  (* This relation explains how to plug the hole in a context with a specific
-   * term.  Note that we use an inductive relation instead of a recursive
-   * definition, because Coq's proof automation is better at working with
-   * relations. *)
   Inductive plug : context -> cmd -> cmd -> Prop :=
   | PlugHole : forall c, plug Hole c c
   | PlugSeq : forall c C c' c2,
     plug C c c'
     -> plug (CSeq C c2) c (Sequence c' c2).
 
-  (* Now we define almost the same step relation as before, with one omission:
-   * only the more trivial of the [Sequence] rules remains. *)
+
   Inductive step0 : valuation * cmd -> valuation * cmd -> Prop :=
   | Step0Assign : forall v x e,
     step0 (v, Assign x e) (v $+ (x, interp e v), Skip)
@@ -1152,12 +1111,53 @@ Qed.
     -> plug C c' c2
     -> cstep (v, c1) (v', c2).
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   (* We can prove equivalence between the two formulations. *)
 
   Theorem step_cstep : forall v c v' c',
     step (v, c) (v', c')
     -> cstep (v, c) (v', c').
   Proof.
+    (* Skipped.. *)
     induct 1.
 
     econstructor.
@@ -1207,6 +1207,7 @@ Qed.
     step0 (v, c) (v', c')
     -> step (v, c) (v', c').
   Proof.
+    (* Skipped.. *)
     invert 1; constructor; assumption.
   Qed.
 
@@ -1216,6 +1217,7 @@ Qed.
     -> plug C c'0 c'
     -> step (v, c) (v', c').
   Proof.
+    (* Skipped.. *)
     induct 1; simplify.
 
     invert H0.
@@ -1233,6 +1235,7 @@ Qed.
     cstep (v, c) (v', c')
     -> step (v, c) (v', c').
   Proof.
+    (* Skipped.. *)
     invert 1.
     eapply cstep_step'.
     eassumption.
@@ -1240,56 +1243,50 @@ Qed.
     assumption.
   Qed.
 
-  (* Bonus material: here's how to make these proofs much more automatic.  We
-   * won't explain the features being used here. *)
 
-  Local Hint Constructors plug step0 cstep : core.
 
-  Theorem step_cstep_snazzy : forall v c v' c',
-    step (v, c) (v', c')
-    -> cstep (v, c) (v', c').
-  Proof.
-    induct 1; repeat match goal with
-                     | [ H : cstep _ _ |- _ ] => invert H
-                     end; eauto.
-  Qed.
 
-  Local Hint Resolve step_cstep_snazzy : core.
 
-  Lemma step0_step_snazzy : forall v c v' c',
-    step0 (v, c) (v', c')
-    -> step (v, c) (v', c').
-  Proof.
-    invert 1; eauto.
-  Qed.
 
-  Local Hint Resolve step0_step_snazzy : core.
 
-  Lemma cstep_step'_snazzy : forall C c0 c,
-    plug C c0 c
-    -> forall v' c'0 v c', step0 (v, c0) (v', c'0)
-    -> plug C c'0 c'
-    -> step (v, c) (v', c').
-  Proof.
-    induct 1; simplify; repeat match goal with
-                               | [ H : plug _ _ _ |- _ ] => invert1 H
-                               end; eauto.
-  Qed.
 
-  Local Hint Resolve cstep_step'_snazzy : core.
 
-  Theorem cstep_step_snazzy : forall v c v' c',
-    cstep (v, c) (v', c')
-    -> step (v, c) (v', c').
-  Proof.
-    invert 1; eauto.
-  Qed.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
   (** * Determinism *)
 
-  (* Each of the relations we have defined turns out to be deterministic.  Let's
-   * prove it. *)
+  (* Each of the relations we have defined turns out to be 
+     deterministic.  Let's prove it. *)
 
   Theorem eval_det : forall v c v1,
     eval v c v1
@@ -1340,11 +1337,49 @@ Qed.
 End Simple.
 
 
-(** * Example of how easy it is to add concurrency to a contextual semantics *)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+(* Example of how easy it is to add concurrency to a contextual semantics *)
 
 Module Concurrent.
-  (* Let's add a construct for *parallel execution* of two commands.  Such
-   * parallelism may be nested arbitrarily. *)
   Inductive cmd :=
   | Skip
   | Assign (x : var) (e : arith)
@@ -1354,16 +1389,15 @@ Module Concurrent.
   | Parallel (c1 c2 : cmd).
 
   Notation "x <- e" := (Assign x e%arith) (at level 75).
-  Infix ";;" := Sequence (at level 76). (* This one changed slightly, to avoid parsing clashes. *)
-  Notation "'when' e 'then' then_ 'else' else_ 'done'" := (If e%arith then_ else_) (at level 75, e at level 0).
-  Notation "'while' e 'loop' body 'done'" := (While e%arith body) (at level 75).
+  Infix ";;" := Sequence (at level 76). 
+    (* This one changed slightly, to avoid parsing clashes. *)
+  Notation "'when' e 'then' then_ 'else' else_ 'done'" := 
+    (If e%arith then_ else_) (at level 75, e at level 0).
+  Notation "'while' e 'loop' body 'done'" := 
+    (While e%arith body) (at level 75).
   Infix "||" := Parallel.
 
 
-  (* We need surprisingly few changes to the contextual semantics, to explain
-   * this new feature.  First, we allow a hole to appear on *either side* of a
-   * [Parallel].  In other words, the "scheduler" may choose either "thread" to
-   * run next. *)
   Inductive context :=
   | Hole
   | CSeq (C : context) (c : cmd)
@@ -1383,8 +1417,7 @@ Module Concurrent.
     plug C c c'
     -> plug (CPar2 c1 C) c (Parallel c1 c').
 
-  (* The only new step rules are for "cleaning up" finished "threads," which
-   * have reached the point of being [Skip] commands. *)
+
   Inductive step0 : valuation * cmd -> valuation * cmd -> Prop :=
   | Step0Assign : forall v x e,
     step0 (v, Assign x e) (v $+ (x, interp e v), Skip)
@@ -1403,14 +1436,58 @@ Module Concurrent.
     interp e v = 0
     -> step0 (v, While e body) (v, Skip)
   | Step0Par1 : forall v c,
-    step0 (v, Parallel Skip c) (v, c).
+    step0 (v, Parallel Skip c) (v, c). (* Only extra command *)
 
+  (* No change here *)
   Inductive cstep : valuation * cmd -> valuation * cmd -> Prop :=
   | CStep : forall C v c v' c' c1 c2,
     plug C c c1
     -> step0 (v, c) (v', c')
     -> plug C c' c2
     -> cstep (v, c1) (v', c2).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   (** Example: stepping a specific program. *)
 
@@ -1425,32 +1502,40 @@ Module Concurrent.
   Local Hint Constructors plug step0 cstep : core.
 
   (* The naive "expected" answer is attainable. *)
-  Theorem correctAnswer : forall n, exists v, cstep^* ($0 $+ ("n", n), prog) (v, Skip)
-                                              /\ v $? "n" = Some (n + 2).
+  Theorem correctAnswer : forall n, 
+    exists v, cstep^* ($0 $+ ("n", n), prog) (v, Skip)
+              /\ v $? "n" = Some (n + 2).
   Proof.
     eexists; propositional.
     unfold prog.
 
     econstructor.
     eapply CStep with (C := CPar1 (CSeq Hole _) _); eauto.
+    simplify.
 
     econstructor.
     eapply CStep with (C := CPar1 Hole _); eauto.
+    simplify.
 
     econstructor.
     eapply CStep with (C := CPar1 Hole _); eauto.
+    simplify.
 
     econstructor.
     eapply CStep with (C := Hole); eauto.
+    simplify.
 
     econstructor.
     eapply CStep with (C := CSeq Hole _); eauto.
+    simplify.
 
     econstructor.
     eapply CStep with (C := Hole); eauto.
+    simplify.
 
     econstructor.
     eapply CStep with (C := Hole); eauto.
+    simplify.
 
     econstructor.
 
@@ -1460,8 +1545,9 @@ Module Concurrent.
   Qed.
 
   (* But so is the "wrong" answer! *)
-  Theorem wrongAnswer : forall n, exists v, cstep^* ($0 $+ ("n", n), prog) (v, Skip)
-                                            /\ v $? "n" = Some (n + 1).
+  Theorem wrongAnswer : forall n, 
+    exists v, cstep^* ($0 $+ ("n", n), prog) (v, Skip)
+              /\ v $? "n" = Some (n + 1).
   Proof.
     eexists; propositional.
     unfold prog.
@@ -1493,82 +1579,4 @@ Module Concurrent.
     equality.
   Qed.
 
-  (** Proving equivalence with non-contextual semantics *)
-
-  (* To give us something interesting to prove, let's also define a
-   * non-contextual small-step semantics.  Note how we have to do some more
-   * explicit threading of mutable state through recursive invocations. *)
-  Inductive step : valuation * cmd -> valuation * cmd -> Prop :=
-  | StepAssign : forall v x e,
-    step (v, Assign x e) (v $+ (x, interp e v), Skip)
-  | StepSeq1 : forall v c1 c2 v' c1',
-    step (v, c1) (v', c1')
-    -> step (v, Sequence c1 c2) (v', Sequence c1' c2)
-  | StepSeq2 : forall v c2,
-    step (v, Sequence Skip c2) (v, c2)
-  | StepIfTrue : forall v e then_ else_,
-    interp e v <> 0
-    -> step (v, If e then_ else_) (v, then_)
-  | StepIfFalse : forall v e then_ else_,
-    interp e v = 0
-    -> step (v, If e then_ else_) (v, else_)
-  | StepWhileTrue : forall v e body,
-    interp e v <> 0
-    -> step (v, While e body) (v, Sequence body (While e body))
-  | StepWhileFalse : forall v e body,
-    interp e v = 0
-    -> step (v, While e body) (v, Skip)
-  | StepParSkip1 : forall v c,
-    step (v, Parallel Skip c) (v, c)
-  | StepPar1 : forall v c1 c2 v' c1',
-    step (v, c1) (v', c1')
-    -> step (v, Parallel c1 c2) (v', Parallel c1' c2)
-  | StepPar2 : forall v c1 c2 v' c2',
-    step (v, c2) (v', c2')
-    -> step (v, Parallel c1 c2) (v', Parallel c1 c2').
-
-  Local Hint Constructors step : core.
-
-  (* Now, an automated proof of equivalence.  Actually, it's *exactly* the same
-   * proof we used for the old feature set! *)
-
-  Theorem step_cstep : forall v c v' c',
-    step (v, c) (v', c')
-    -> cstep (v, c) (v', c').
-  Proof.
-    induct 1; repeat match goal with
-                     | [ H : cstep _ _ |- _ ] => invert H
-                     end; eauto.
-  Qed.
-
-  Local Hint Resolve step_cstep : core.
-
-  Lemma step0_step : forall v c v' c',
-    step0 (v, c) (v', c')
-    -> step (v, c) (v', c').
-  Proof.
-    invert 1; eauto.
-  Qed.
-
-  Local Hint Resolve step0_step : core.
-
-  Lemma cstep_step' : forall C c0 c,
-    plug C c0 c
-    -> forall v' c'0 v c', step0 (v, c0) (v', c'0)
-    -> plug C c'0 c'
-    -> step (v, c) (v', c').
-  Proof.
-    induct 1; simplify; repeat match goal with
-                               | [ H : plug _ _ _ |- _ ] => invert1 H
-                               end; eauto.
-  Qed.
-
-  Local Hint Resolve cstep_step' : core.
-
-  Theorem cstep_step : forall v c v' c',
-    cstep (v, c) (v', c')
-    -> step (v, c) (v', c').
-  Proof.
-    invert 1; eauto.
-  Qed.
 End Concurrent.
