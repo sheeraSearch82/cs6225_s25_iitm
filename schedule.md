@@ -21,3 +21,4 @@ permalink: /schedule/
 | 13 | Evaluation Contexts | | [Coq](https://github.com/kayceesrk/cs6225_s25_iitm/blob/main/lectures/EvaluationContexts.v), [slides (key)]({{site.baseurl}}/lectures/6_evaluation_contexts.key), [slides (pdf)]({{site.baseurl}}/lectures/6_evaluation_contexts.pdf) | |
 | 13 | Hoare Logic | | | | 
 | 14 | Effectful Programming in F\* | | | |
+| 15 | Concurrent Separation Logic | | | |
