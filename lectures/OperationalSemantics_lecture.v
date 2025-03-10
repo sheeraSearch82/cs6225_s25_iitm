@@ -635,6 +635,7 @@ Qed.
     Check trc_trans.
     eapply trc_trans.
     apply step_star_Seq.
+    (* Skiping the rest... *)
     eassumption.
     econstructor.
     apply StepSeq2.
@@ -785,7 +786,9 @@ Qed.
 
   Theorem simple_invariant :
     invariantFor 
-      (trsys_of ($0 $+ ("a", 1)) ("b" <- "a" + 1;; "c" <- "b" + "b"))
+      (trsys_of ($0 $+ ("a", 1)) 
+        ("b" <- "a" + 1;; 
+         "c" <- "b" + "b"))
       (fun s => let (v,c) := s in c = Skip -> v $? "c" = Some 4).
   Proof.
     (* When we can phrase problems in terms of transition systems with 
@@ -883,7 +886,7 @@ Qed.
     isEven n
     -> invariantFor 
          (trsys_of ($0 $+ ("n", n) $+ ("a", 0)) my_loop)
-         (fun s => all_programs (snd s)
+         (fun s (* (v,c) *) => all_programs (snd s)
                    /\ exists n a, fst s $? "n" = Some n
                                   /\ fst s $? "a" = Some a
                                   /\ isEven n
@@ -963,6 +966,7 @@ Qed.
     invert H5.
     unfold all_programs in *; simplify; propositional; try equality.
     invert H1.
+    
     do 2 eexists; propositional; try eassumption.
     invert H2.
     do 2 eexists; propositional; try eassumption.
@@ -1016,7 +1020,7 @@ Qed.
     assumption.
     first_order.
   Qed.
-
+  
   (* We'll return to these systems and their abstractions in the next few
    * chapters. *)
 
