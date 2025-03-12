@@ -19,6 +19,6 @@ permalink: /schedule/
 | 11 | Operational Semantics | 05/03, 06/03, 07/03, 10/03 | [Coq](https://github.com/kayceesrk/cs6225_s25_iitm/blob/main/lectures/OperationalSemantics.v), [slides (key)]({{site.baseurl}}/lectures/4_operational_semantics.key), [slides (pdf)]({{site.baseurl}}/lectures/4_operational_semantics.pdf) | |
 | 12 | Lambda Calculus | | [Coq](https://github.com/kayceesrk/cs6225_s25_iitm/blob/main/lectures/LambdaCalculusAndTypeSoundness.v), [slides (key)]({{site.baseurl}}/lectures/5_lambda_calculus.key), [slides (pdf)]({{site.baseurl}}/lectures/5_lambda_calculus.pdf) | |
 | 13 | Evaluation Contexts | | [Coq](https://github.com/kayceesrk/cs6225_s25_iitm/blob/main/lectures/EvaluationContexts.v), [slides (key)]({{site.baseurl}}/lectures/6_evaluation_contexts.key), [slides (pdf)]({{site.baseurl}}/lectures/6_evaluation_contexts.pdf) | |
-| 13 | Hoare Logic | | | | 
-| 14 | Effectful Programming in F\* | | | |
-| 15 | Concurrent Separation Logic | | | |
+| 13 | Hoare Logic | | [Coq](https://github.com/kayceesrk/cs6225_s25_iitm/blob/main/lectures/HoareLogic.v), [slides (key)]({{site.baseurl}}/lectures/7_Hoare_Logic.key), [slides (pdf)]({{site.baseurl}}/lectures/7_Hoare_Logic.pdf) | | 
+| 14 | Effectful Programming in F\* | | [fst]({{site.baseurl}}/lectures/Fstar_effects.fst) | |
+| 15 | Pulse -- concurrent separation logic | | | |

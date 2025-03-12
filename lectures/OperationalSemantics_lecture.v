@@ -1390,6 +1390,8 @@ Module Concurrent.
   | Sequence (c1 c2 : cmd)
   | If (e : arith) (then_ else_ : cmd)
   | While (e : arith) (body : cmd)
+  
+  (* New command *)
   | Parallel (c1 c2 : cmd).
 
   Notation "x <- e" := (Assign x e%arith) (at level 75).
@@ -1405,6 +1407,8 @@ Module Concurrent.
   Inductive context :=
   | Hole
   | CSeq (C : context) (c : cmd)
+  
+  (* New contexts *)
   | CPar1 (C : context) (c : cmd)
   | CPar2 (c : cmd) (C : context).
 
@@ -1414,6 +1418,8 @@ Module Concurrent.
   | PlugSeq : forall c C c' c2,
     plug C c c'
     -> plug (CSeq C c2) c (Sequence c' c2)
+    
+  (* New plugs *)
   | PlugPar1 : forall c C c' c2,
     plug C c c'
     -> plug (CPar1 C c2) c (Parallel c' c2)
@@ -1439,8 +1445,10 @@ Module Concurrent.
   | Step0WhileFalse : forall v e body,
     interp e v = 0
     -> step0 (v, While e body) (v, Skip)
+
+  (* New command *)
   | Step0Par1 : forall v c,
-    step0 (v, Parallel Skip c) (v, c). (* Only extra command *)
+    step0 (v, Parallel Skip c) (v, c).
 
   (* No change here *)
   Inductive cstep : valuation * cmd -> valuation * cmd -> Prop :=
@@ -1510,6 +1518,7 @@ Module Concurrent.
     exists v, cstep^* ($0 $+ ("n", n), prog) (v, Skip)
               /\ v $? "n" = Some (n + 2).
   Proof.
+    (* First thread executes before the second *)
     eexists; propositional.
     unfold prog.
 
@@ -1553,6 +1562,7 @@ Module Concurrent.
     exists v, cstep^* ($0 $+ ("n", n), prog) (v, Skip)
               /\ v $? "n" = Some (n + 1).
   Proof.
+    (* Interleaved execution *)
     eexists; propositional.
     unfold prog.
 
