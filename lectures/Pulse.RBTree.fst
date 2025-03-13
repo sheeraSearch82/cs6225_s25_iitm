@@ -410,3 +410,34 @@ ensures
 {
    fold (is_tree ct (T node.col ltree node.key rtree))
 }
+
+let is_tree_cases (x : option (ref (node))) (ft : rbtree')
+= match x with
+  | None -> pure (ft == E)
+  | Some v -> 
+    exists* (n:node) (ltree:rbtree') (rtree:rbtree').
+      pts_to v n **
+      pure (ft == T n.col ltree n.key rtree) **
+      is_tree n.left ltree **
+      is_tree n.right rtree
+
+ghost
+fn cases_of_is_tree  (x:tree_t) (ft: rbtree')
+  requires is_tree x ft
+  ensures  is_tree_cases x ft
+{
+  match ft {
+    E -> {
+      unfold (is_tree x E);
+      fold (is_tree_cases None ft);
+    }
+    T col ltree key rtree -> {
+      unfold (is_tree x (T col ltree key rtree));
+      with p lct rct. _;
+      with n. assert pts_to p n;
+      with l'. rewrite is_tree lct l' as is_tree n.left l';
+      with r'. rewrite is_tree rct r' as is_tree n.right r';
+      fold (is_tree_cases (Some p) (T col ltree key rtree))
+    }
+  }
+}
