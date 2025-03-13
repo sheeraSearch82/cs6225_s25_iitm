@@ -143,11 +143,58 @@ ensures pts_to x ('i + 1) ** pts_to y 'j
 }
 
 (* This is true for any general f:slprop. We therefore get the post-condition that incr does not alter f, for free*)
+(* 'i - 'i has type FStar.Ghost.erased int*)
 fn incr_frame_any (x:ref int) (f:slprop)
 requires pts_to x 'i ** f
 ensures pts_to x ('i + 1) ** f
 {
    incr x;
 }
+
+(* Explicit way of passing the value in ref cell x. Note the use of erased *)
+
+fn incr_explicit_i (x:ref int) (i:erased int)
+requires pts_to x i
+ensures pts_to x (i + 1)
+{
+    let v = !x;
+    x := v + 1;
+}
+
+(* Other slprop connectives
+   1. exists* (x1:t1) ... (xn:tn). p 
+   2. forall* (x1:t1) ... (xn:tn). p 
+   3. p @==> q - , called separating implication. Similar to magic wand or view shift in other Separation logics.*)
+
+(* TODO - Examples will be provided later *)
+
+(* MUTABLE REFERENCES*)
+
+
+(*--ref t ----> Stack or Heap references --*)
+
+(* Reading a reference *)
+
+
+(* Erased values - for specifications and proofs only *)
+
+(* Writing through a reference *)
+
+(* Dereferencing is explicit *)
+
+(* Inspecting the Proof state *)
+
+(* Stateful commands are explicitly sequenced *)
+
+(* Fractional permissions *)
+
+(* STACK REFERENCES *)
+
+(* Stack references are scoped and implicitly reclaimed *)
+
+(* HEAP REFERENCES *)
+
+(* GHOST REFERENCES*)
+
 
 
