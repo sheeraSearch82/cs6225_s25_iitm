@@ -339,8 +339,8 @@ open Pulse.Lib.Pervasives
 
 noeq type node = {
     col : color;
-    key : nat;
     left : tree_t;
+    key : nat;
     right : tree_t;
 }
 
@@ -353,9 +353,9 @@ let rec is_tree  (ct:tree_t) (ft:rbtree')
   match ft with
   | E -> pure (ct == None)
   | T  col left' key right' ->
-            exists* (p:node_ptr) (lct:tree_t) (rct:tree_t) (colr:color).
+            exists* (p:node_ptr) (lct:tree_t) (rct:tree_t).
             pure (ct == Some p) **
-            pts_to p {col = colr; key = key; left = lct; right = rct} **
+            pts_to p {col = col; left = lct; key = key;  right = rct} **
             is_tree lct left' **
             is_tree rct right'
   
@@ -377,4 +377,36 @@ fn intro_is_tree_E (x:tree_t)
   ensures is_tree x E
 {
   fold (is_tree x E); 
+}
+
+
+ghost
+fn elim_is_tree_node (ct:tree_t) (colr:color) (key:nat) (ltree:rbtree') (rtree:rbtree')
+  requires is_tree ct (T colr ltree key rtree)
+  ensures (
+  exists* (p:node_ptr) (lct:tree_t) (rct:tree_t).
+    pure (ct == Some p) **
+    pts_to p {col=colr; left = lct; key = key; right = rct} **
+    is_tree lct ltree **
+    is_tree rct rtree
+)
+{
+  unfold is_tree;
+  ()
+}
+
+module G = FStar.Ghost
+
+
+ghost
+fn intro_is_tree_node (ct:tree_t) (v:node_ptr) (#node:node) (#ltree:rbtree') (#rtree:rbtree')
+requires
+  pts_to v node **
+  is_tree node.left ltree **
+  is_tree node.right rtree **
+  pure (ct == Some v)
+ensures
+  is_tree ct (T node.col ltree node.key rtree)
+{
+   fold (is_tree ct (T node.col ltree node.key rtree))
 }
