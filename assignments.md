@@ -18,6 +18,11 @@ moodle]().
 | 3 | 31/01/25 | 07/02/25 | Program Analysis |
 | 4 | 07/02/25 | 14/02/25 | ContainersAndHoFs |
 | 5 | 14/02/25 | 21/02/25 | BST |
+| 6 | 21/02/25 | 01/03/25 | F* Functional Verification |
+| 7 | 05/03/25 | 15/03/25 | Transition Systems |
+| 8 | | | Big Step vs Interpreter (Operational Semantics) | 
+| 9 | | | Subtyping (Lambda Calculus + Evaluation Contexts |
+| 10 | | | Hoare Logic |
 
 <br/>
 
