@@ -332,7 +332,10 @@ noeq type rbtree =
 val proj: rbtree -> Pure rbtree' (requires True) (ensures (fun r -> balanced_rbtree' r))
 let proj tr = Mk?.tr tr
 
+(*TODO - move the above F* spec of RB tree to a new file after module loading issue is resolved*)
+(* /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// *)
 
+(* Pulse Implementation of RB tree*)
 #lang-pulse
 
 open Pulse.Lib.Pervasives
@@ -347,6 +350,7 @@ noeq type node = {
 and node_ptr = ref (node)
 //A nullable pointer to a node
 and tree_t  = option (node_ptr)
+
 
 let rec is_tree  (ct:tree_t) (ft:rbtree')
     : Tot slprop (decreases ft) =
@@ -441,3 +445,64 @@ fn cases_of_is_tree  (x:tree_t) (ft: rbtree')
     }
   }
 }
+
+ghost
+fn is_tree_case_none (x:tree_t) (#l:rbtree')
+  requires is_tree x l ** pure (x == None)
+  ensures  is_tree x l ** pure (l == E)
+{
+  rewrite each x as None;
+  cases_of_is_tree None l;
+  unfold is_tree_cases;
+  intro_is_tree_E x;
+  ()
+}
+
+ghost
+fn is_tree_case_some (x:tree_t) (v:node_ptr) (#ft:rbtree') 
+  requires is_tree x ft ** pure (x == Some v)
+ensures
+   exists* (node:node) (ltree:rbtree') (rtree:rbtree').
+    pts_to v node **
+    is_tree node.left ltree **
+    is_tree node.right rtree **
+    pure (ft == T node.col ltree node.key rtree)
+  
+{
+  rewrite each x as Some v;
+  cases_of_is_tree (Some v) ft;
+  unfold is_tree_cases;
+}
+
+(* 
+   F* Spec
+   val color_of: t:rbtree' -> Tot color
+   let color_of t = match t with
+     | E -> B
+  |   T c _ _ _ -> c *)
+
+(* Pulse implementation *)
+  
+fn rec color_t (x:tree_t)
+  requires is_tree x 'l
+  returns c:color
+  ensures is_tree x 'l ** pure (c == color_of 'l)
+  {
+    match x {
+    None -> {
+       is_tree_case_none None;
+       rewrite is_tree None 'l as is_tree x 'l;
+       B
+    }
+    Some vl -> {
+       is_tree_case_some (Some vl) vl;
+       with gnode. assert pts_to vl gnode;
+       let node = !vl;
+       rewrite each gnode as node;
+       let colr = node.col;
+       intro_is_tree_node x vl;
+       colr
+   }
+ }
+}
+
