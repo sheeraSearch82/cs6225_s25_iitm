@@ -506,3 +506,93 @@ fn rec color_t (x:tree_t)
  }
 }
 
+(*val black_height: t:rbtree' -> Tot (option nat)
+let rec black_height t = match t with
+  | E -> Some 0
+  | T c a _ b ->
+    (*
+     * TODO: ideally we should be able to write match (black_height a, black_height b)
+     *)
+    let hha = black_height a in
+    let hhb = black_height b in
+    match (hha, hhb) with
+      | Some ha, Some hb ->
+        if ha = hb then
+          if c = R then Some ha else Some (ha + 1)
+        else
+          None
+      | _, _ -> None*)
+
+fn rec black_height_t (x:tree_t)
+  requires is_tree x 'l
+  returns h:(option nat)
+  ensures is_tree x 'l ** pure (h == black_height 'l)
+{
+   match x {
+    None -> {
+       is_tree_case_none None;
+       rewrite is_tree None 'l as is_tree x 'l;
+       Some 0
+    }
+    Some vl -> {
+       is_tree_case_some (Some vl) vl;
+       with gnode. assert pts_to vl gnode;
+       let node = !vl;
+       rewrite each gnode as node;
+       let l_height = black_height_t node.left;
+       let r_height = black_height_t node.right;
+       intro_is_tree_node x vl;
+       match l_height {
+         Some ha -> {
+           match r_height {
+            Some hb -> {
+              let b:bool = ha = hb;
+              if b {
+                let b1:bool = node.col = R;
+                if b1 {
+                  Some ha
+                }
+                else
+                {
+                  Some (ha + 1)
+                }
+              }
+              else
+              {
+                admit()
+              }
+            }
+            None -> {
+              admit()
+            }
+           }
+         }
+        None -> {
+          match r_height {
+            Some hb -> {
+              admit()
+            }
+            None -> {
+              
+              admit()
+            }
+           }
+        }
+       }
+   }
+ }
+}
+(* Some vl -> {
+      is_tree_case_some (Some vl) vl;
+      with gnode. assert pts_to vl gnode;
+      let node = !vl;
+      rewrite each gnode as node; (* unfortunate *)
+      let l_height = height node.left;
+      let r_height = height node.right;
+      intro_is_tree_node x vl;
+      if (l_height > r_height) {
+        (l_height + 1)
+      } else {
+        (r_height + 1)
+      }
+      *)
