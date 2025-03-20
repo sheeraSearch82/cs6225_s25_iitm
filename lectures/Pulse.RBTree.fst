@@ -523,6 +523,9 @@ let rec black_height t = match t with
           None
       | _, _ -> None*)
 
+let none_term ()
+   : Tot (o:option nat{o == None}) = None
+
 fn rec black_height_t (x:tree_t)
   requires is_tree x 'l
   returns h:(option nat)
@@ -559,22 +562,22 @@ fn rec black_height_t (x:tree_t)
               }
               else
               {
-                admit()
+                none_term ();
               }
             }
             None -> {
-              admit()
+              none_term ();
             }
            }
          }
         None -> {
           match r_height {
             Some hb -> {
-              admit()
+              none_term ();
             }
             None -> {
               
-              admit()
+              None #nat; //Either use none_term () or None #nat
             }
            }
         }
