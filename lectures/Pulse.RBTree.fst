@@ -585,17 +585,3 @@ fn rec black_height_t (x:tree_t)
    }
  }
 }
-(* Some vl -> {
-      is_tree_case_some (Some vl) vl;
-      with gnode. assert pts_to vl gnode;
-      let node = !vl;
-      rewrite each gnode as node; (* unfortunate *)
-      let l_height = height node.left;
-      let r_height = height node.right;
-      intro_is_tree_node x vl;
-      if (l_height > r_height) {
-        (l_height + 1)
-      } else {
-        (r_height + 1)
-      }
-      *)
