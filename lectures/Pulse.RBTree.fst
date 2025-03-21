@@ -585,3 +585,59 @@ fn rec black_height_t (x:tree_t)
    }
  }
 }
+
+(*spec:
+  val min_elt: t:rbtree' -> Pure nat (requires (b2t (T? t))) (ensures (fun r -> True))
+  let rec min_elt (T _ a x _) = match a with
+  | E -> x
+  | _ -> min_elt a*)
+
+(* type rbtree' =
+  | E
+  | T: col:color -> left:rbtree' -> key:nat -> right:rbtree' -> rbtree'*)
+
+ghost
+fn is_tree_case_some1 (x:tree_t) (v:node_ptr) (#ft:rbtree') 
+  requires is_tree x ft ** pure (x == Some v)
+  ensures  is_tree x ft ** pure (T? ft)
+{
+  rewrite each x as Some v;
+  cases_of_is_tree (Some v) ft;
+  unfold is_tree_cases;
+  intro_is_tree_node (Some v) v;
+  with 't. rewrite is_tree (Some v) 't as is_tree x 't;
+}
+
+fn rec min_elt_t (x:tree_t) (#t : erased (rbtree'){T? t})
+  requires is_tree x t ** (pure (Some? x))
+  returns h:nat
+  ensures is_tree x t ** pure (h == min_elt t)
+{
+  match x {
+    Some vl -> {
+      is_tree_case_some (Some vl) vl;
+      with node. assert pts_to vl node;
+      let n = !vl;
+      rewrite each node as n;
+      let left = n.left;
+      rewrite each n.left as left;
+      with ltree. assert (is_tree left ltree);
+      match left {
+        None -> {
+          is_tree_case_none None;
+          let k = n.key;
+          intro_is_tree_node x vl;
+          k
+        }
+        Some vll -> {
+          is_tree_case_some1 (Some vll) vll;
+          let min = min_elt_t (Some vll);
+          rewrite each Some vll as n.left;
+          intro_is_tree_node x vl;
+          min
+        }
+      }
+    }
+  }
+}
+
