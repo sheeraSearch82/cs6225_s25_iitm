@@ -641,3 +641,120 @@ fn rec min_elt_t (x:tree_t) (#t : erased (rbtree'){T? t})
   }
 }
 
+(* val max_elt: t:rbtree' -> Pure nat (requires (b2t (T? t))) (ensures (fun r -> True))
+let rec max_elt (T _ _ x b) = match b with
+  | E -> x
+  | _ -> max_elt b *)
+
+fn rec max_elt_t (x:tree_t) (#t : erased (rbtree'){T? t})
+  requires is_tree x t ** (pure (Some? x))
+  returns h:nat
+  ensures is_tree x t ** pure (h == max_elt t)
+{
+   match x {
+    Some vl -> {
+      is_tree_case_some (Some vl) vl;
+      with node. assert pts_to vl node;
+      let n = !vl;
+      rewrite each node as n;
+      let right = n.right;
+      rewrite each n.right as right;
+      with ltree. assert (is_tree right ltree);
+      match right {
+        None -> {
+          is_tree_case_none None;
+          let k = n.key;
+          intro_is_tree_node x vl;
+          k
+        }
+        Some vlr -> {
+          is_tree_case_some1 (Some vlr) vlr;
+          let max = max_elt_t (Some vlr);
+          rewrite each Some vlr as n.right;
+          intro_is_tree_node x vl;
+          max
+        }
+      }
+    }
+  }
+}
+
+(* val r_inv: t:rbtree' -> Tot bool
+let r_inv t = color_of t = B *)
+
+fn rec r_inv_t (x:tree_t) (#t : erased (rbtree'))
+  requires is_tree x t
+  returns b:bool
+  ensures is_tree x t ** pure (b == r_inv  t)
+{
+  let c = color_t x;
+  let b:bool = c = B;
+  b
+}
+
+(* val c_inv: t:rbtree' -> Tot bool
+let rec c_inv t = match t with
+  | E -> true
+  | T R a _ b -> color_of a = B && color_of b = B && c_inv a && c_inv b
+  | T B a _ b -> c_inv a && c_inv b *)
+
+fn rec c_inv_t (x:tree_t) (#t : erased (rbtree'))
+  requires is_tree x t
+  returns b:bool
+  ensures is_tree x t ** pure (b == c_inv  t)
+{
+   match x  {
+    None -> {
+      is_tree_case_none None;
+       rewrite is_tree None t as is_tree x t;
+       true
+    }
+    Some vl -> {
+      is_tree_case_some (Some vl) vl;
+       with gnode. assert pts_to vl gnode;
+       let node = !vl;
+       rewrite each gnode as node;
+       let colr = node.col;
+       let b:bool = colr = R;
+       let left = node.left;
+       let right = node.right;
+       if b 
+       {
+         let c_l = color_t left;
+         let c_r = color_t right;
+         let b1:bool = c_l = B;
+         let b2:bool = c_r = B;
+         let b3:bool = c_inv_t left;
+         let b4:bool = c_inv_t right;
+         let b5:bool = b1 && b2 && b3 && b4;
+         intro_is_tree_node x vl;
+         b5
+       }
+       else
+       {
+        assert (pure (colr == B));
+        let b3:bool = c_inv_t left;
+        let b4:bool = c_inv_t right;
+        let b5:bool = b3 && b4;
+        intro_is_tree_node x vl;
+         b5
+       }
+    }
+   }
+}
+
+(* val h_inv: t:rbtree' -> Tot bool
+let h_inv t = Some? (black_height t) *)
+
+fn rec h_inv_t (x:tree_t) (#t : erased (rbtree'))
+  requires is_tree x t
+  returns b:bool
+  ensures is_tree x t ** pure (b == h_inv  t)
+{
+  let h = black_height_t x;
+  let b:bool = Some? h;
+  b
+}
+
+
+
