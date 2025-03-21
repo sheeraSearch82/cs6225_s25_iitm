@@ -756,5 +756,104 @@ fn rec h_inv_t (x:tree_t) (#t : erased (rbtree'))
   b
 }
 
+(* val k_inv: t:rbtree' -> Tot bool
+let rec k_inv t = match t with
+  | E -> true
+  | T _ E x E -> true
+  | T _ E x b  ->
+    let b_min = min_elt b in
+    k_inv b && b_min > x
+  | T _ a x E ->
+    let a_max = max_elt a in
+    k_inv a && x > a_max
+  | T _ a x b ->
+    let a_max = max_elt a in
+    let b_min = min_elt b in
+    k_inv a && k_inv b && x > a_max && b_min > x*)
 
+fn rec k_inv_t (x:tree_t) (#t : erased (rbtree'))
+  requires is_tree x t
+  returns b:bool
+  ensures is_tree x t ** pure (b == k_inv  t)
+  {
+    match x {
+      None -> {
+        is_tree_case_none None;
+        rewrite is_tree None t as is_tree x t;
+        true
+      }
+      Some vl -> {
+        is_tree_case_some (Some vl) vl; (* ---> tree unfolding *)
+        with gnode. assert pts_to vl gnode;
+        let node = !vl;
+        rewrite each gnode as node;
+        let left = node.left;
+        let right = node.right;
+        let k = node.key;
+        rewrite each node.left as left;
+        with ltree. assert (is_tree left ltree); (* ---> left unfolding *)
+        rewrite each node.right as right;
+        with rtree. assert (is_tree right rtree); (* ---> right unfolding *)
+        match left {
+          None -> {
+            is_tree_case_none None;
+            match right {
+              None -> {
+                is_tree_case_none None #rtree;
+                rewrite is_tree None rtree as is_tree right rtree;
+                rewrite is_tree None ltree as is_tree left ltree;
+                rewrite each right as node.right; (* <---  right folding *)
+                rewrite each left as node.left;   (* <---  left folding *)
+                intro_is_tree_node x vl; (* <---  tree folding *)
+                //show_proof_state;
+                true
+              }
+              Some vlr -> {
+                is_tree_case_some1 (Some vlr) vlr;
+                let b_min = min_elt_t right;
+                let b:bool = k_inv_t right;
+                let b1:bool = b_min > k;
+                let b2:bool = b && b1;
+                rewrite each (Some vlr) as node.right;
+                intro_is_tree_node x vl; 
+                b2
+              }
+            }
+          }
+          Some vll -> {
+            is_tree_case_some1 (Some vll) vll;
+            match right {
+              None -> {
+                is_tree_case_none None #rtree;
+                let a_max = max_elt_t left;
+                let b:bool = k_inv_t left;
+                let b1:bool = k > a_max;
+                let b2:bool = b && b1;
+                rewrite is_tree None rtree as is_tree right rtree;
+                rewrite each right as node.right; 
+                rewrite each (Some vll) as node.left;
+                intro_is_tree_node x vl; 
+                b2
+              }
+              Some vlr -> {
+                is_tree_case_some1 (Some vlr) vlr;
+                let a_max = max_elt_t left;
+                let b_min = min_elt_t right;
+                (*  k_inv a && k_inv b && x > a_max && b_min > x *)
+                let b1:bool = k_inv_t left;
+                let b2:bool = k_inv_t right;
+                let b3:bool = k > a_max;
+                let b4:bool = b_min > k;
+                let b5:bool = b1 && b2 && b3 && b4;
+                rewrite each (Some vlr) as node.right;
+                rewrite each (Some vll) as node.left;
+                intro_is_tree_node x vl; 
+                b5
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 
