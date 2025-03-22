@@ -152,6 +152,21 @@ let swap_add_sub r1 r2 =
 Exercise: sketch hand proof that this code is correct
 *)
 
+val swap' : t:ref int -> r1:ref int -> r2:ref int -> ST unit
+    (requires (fun h0 -> (addr_of r1 <> addr_of r2) /\
+                         (addr_of r1 <> addr_of t) /\
+                         (addr_of r2 <> addr_of t)))
+    (ensures (fun h0 _ h3 -> modifies !{t,r1,r2} h0 h3 /\
+                             sel h3 r2 == sel h0 r1 /\ sel h3 r1 == sel h0 r2))
+let swap' t r1 r2 =
+  t := !r1;
+  r1 := !r2;
+  r2 := !t
+
+  (* Need to mention that all the locations are distinct *)
+
+  
+
 (*******************************************************************************)
 
 (* Stateful count: 1 + 1 + 1 + ... *)
