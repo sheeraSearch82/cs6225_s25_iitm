@@ -1042,7 +1042,8 @@ Module StlcExceptions.
     -> plug ac (Throw1 C) e (Throw e')
   | PlugCatch1 : forall e e' C x1 e1,
     plug true C e e'
-    -> plug true (Catch1 C x1 e1) e (Catch e' x1 e1).
+    -> plug true (Catch1 C x1 e1) e (Catch e' x1 e1). 
+        (* [true] is important *)
 
   Inductive step0 : exp -> exp -> Prop :=
   | Beta : forall x e v,
@@ -1067,7 +1068,8 @@ Module StlcExceptions.
 
   (* New cases: *)
   | ThrowBubble : forall v C e,
-      plug false C (Throw v) e (* [false] is important *)
+      plug false C (Throw v) e 
+       (* [false] is important *)
       -> value v
       -> C <> Hole
       -> step0 e (Throw v)
@@ -1094,6 +1096,8 @@ Module StlcExceptions.
     equality.
   Qed.
   
+
+  
   Definition e0 := Catch (Throw (Const 0)) "x" (Const 1).
 
   Example impossible: step0 e0 (Throw (Const 0)).
@@ -1110,6 +1114,15 @@ Module StlcExceptions.
     -> plug true C e2 e2'
     -> step0 e1 e2
     -> step e1' e2'.
+    
+  Example ex3: step e1 (Throw (Const 0)).
+  Proof.
+    eapply StepRule with (e1 := e1).
+    Print e1.
+    3: { apply ex2. }
+    econstructor.
+    econstructor.
+  Qed.
 
  Example ex4: step^* (Catch e1 "x" (Const 1)) (Const 1).
  (* try 
@@ -1322,6 +1335,7 @@ Qed.
   Proof.
     invert 1; t.
   Qed.
+ 
 
   Local Hint Resolve progress preservation : core.
 
