@@ -2,6 +2,9 @@ module PulseIntro
 #lang-pulse
 open Pulse
 
+(* Please refer to https://fstar-lang.org/tutorial/book/pulse/pulse.html for the
+   source materials where this lecuture is based on. *)
+
 (******************************************************************************)
 (* Section: Pulse Basics *)
 (******************************************************************************)
@@ -600,3 +603,1348 @@ ensures emp
     rewrite each
       p.x as x, p.y as y;
 }
+
+
+(******************************************************************************)
+(* Section: Conditional *)
+(******************************************************************************)
+
+let max_spec x y = if x < y then y else x
+
+fn max #p #q (x y:ref int)
+requires pts_to x #p 'vx ** pts_to y #q 'vy
+returns n:int
+ensures pts_to x #p 'vx ** pts_to y #q 'vy
+        ** pure (n == max_spec 'vx 'vy)
+{
+    let vx = !x;
+    let vy = !y;
+    if (vx > vy)
+    {
+        vx
+    }
+    else
+    {
+        vy
+    }
+}
+
+[@@expect_failure]
+fn max_alt #p #q (x y:ref int)
+requires pts_to x #p 'vx ** pts_to y #q 'vy
+returns n:int
+ensures pts_to x #p 'vx ** pts_to y #q 'vy
+        ** pure (n == max_spec 'vx 'vy)
+{
+    let mut result = 0;
+    let vx = !x;
+    let vy = !y;
+    if (vx > vy)
+    {
+        result := vx;
+    }
+    else
+    {
+        result := vy;
+    };
+    !result;
+}
+
+fn max_alt #p #q (x y:ref int)
+requires pts_to x #p 'vx ** pts_to y #q 'vy
+returns n:int
+ensures pts_to x #p 'vx ** pts_to y #q 'vy
+        ** pure (n == max_spec 'vx 'vy)
+{
+    let mut result = 0;
+    let vx = !x;
+    let vy = !y;
+    if (vx > vy)
+    ensures
+     exists* r.
+       pts_to x #p 'vx **
+       pts_to y #q 'vy **
+       pts_to result r **
+       pure (r == max_spec 'vx 'vy)
+    {
+        result := vx;
+    }
+    else
+    {
+        result := vy;
+    };
+    !result;
+}
+
+(* Pattern matching with nullable references *)
+
+let nullable_ref a = option (ref a)
+
+(* Representation Predicate *)
+let pts_to_or_null #a
+        (x:nullable_ref a)
+        (#[default_arg (`1.0R)] p:perm) //implicit argument with a default
+        (v:option a)
+: slprop
+= match x with
+  | None -> pure (v == None)
+  | Some x -> exists* w. pts_to x #p w ** pure (v == Some w)
+
+fn read_nullable #a #p (r:nullable_ref a)
+requires pts_to_or_null r #p 'v
+returns o:option a
+ensures pts_to_or_null r #p 'v
+        ** pure ('v == o)
+{
+    match r {
+     Some x -> {
+        //show_proof_state;
+        rewrite each r as (Some x);
+        //show_proof_state;
+        unfold (pts_to_or_null (Some x) #p 'v);
+        let o = !x;
+        fold (pts_to_or_null (Some x) #p 'v);
+        //rewrite each (Some x) as r;
+        Some o
+     }
+     None -> {
+        rewrite each r as None;
+        unfold (pts_to_or_null None #p 'v);
+        fold (pts_to_or_null None #p 'v);
+        rewrite each (None #(ref a)) as r;
+        None #a
+     }
+    }
+}
+
+[@@expect_failure]
+fn read_nullable_alt #a #p (r:nullable_ref a)
+requires pts_to_or_null r #p 'v
+returns o:option a
+ensures emp
+{
+    match r {
+     Some x -> { admit () }
+     _ -> {
+        // we only have `r == _` in scope
+        // not the negation of the prior branch conditions
+        // i.e., unlike F*, we don't have not (Some? r)
+        // so the assertion below fails
+        assert (pure (r == None)); //fails here without [@@expect_failre]
+        admit() }
+    }
+}
+
+
+ghost
+fn elim_pts_to_or_null_none #a #p (r:nullable_ref a)
+requires pts_to_or_null None #p 'v ** pure (r == None)
+ensures pts_to_or_null r #p 'v ** pure ('v == None)
+{
+    rewrite each r as None;
+    unfold (pts_to_or_null None #p 'v);
+    fold (pts_to_or_null None #p 'v);
+    rewrite each (None #(ref a)) as r;
+}
+
+ghost
+fn intro_pts_to_or_null_none #a #p (r:nullable_ref a)
+requires pure (r == None)
+ensures pts_to_or_null r #p None
+{
+    fold (pts_to_or_null #a None #p None);
+    rewrite each (None #(ref a)) as r;
+}
+
+ghost
+fn elim_pts_to_or_null_some #a #p (r:nullable_ref a) (x:ref a)
+requires pts_to_or_null (Some x) #p 'v
+ensures exists* w. pts_to x #p w ** pure ('v == Some w)
+{
+    rewrite each r as (Some x);
+    unfold (pts_to_or_null (Some x) #p 'v);
+}
+
+ghost
+fn intro_pts_to_or_null_some #a #p (r:nullable_ref a) (x:ref a)
+requires pts_to x #p 'v ** pure (r == Some x)
+ensures pts_to_or_null r #p (Some 'v)
+{
+    fold (pts_to_or_null (Some x) #p (Some 'v));
+    rewrite each (Some x) as r;
+}
+
+fn read_nullable_alt #a #p (r:nullable_ref a)
+requires pts_to_or_null r #p 'v
+returns o:option a
+ensures pts_to_or_null r #p 'v
+        ** pure ('v == o)
+{
+    match r {
+     Some x -> {
+        elim_pts_to_or_null_some r x;
+        let o = !x;
+        intro_pts_to_or_null_some r x;
+        Some o
+     }
+     None -> {
+        elim_pts_to_or_null_none r;
+        None #a
+     }
+    }
+}
+
+fn write_nullable #a (r:nullable_ref a) (v:a)
+requires pts_to_or_null r 'v
+ensures exists* w. pts_to_or_null r w ** pure (Some? r ==> w == Some v)
+{
+    match r {
+     None -> {
+      //show_proof_state;
+      rewrite each (None #(ref a)) as r;
+      ()
+     }
+     Some x -> {
+        elim_pts_to_or_null_some r x;
+        x := v;
+        intro_pts_to_or_null_some r x;
+     }
+    }
+}
+
+fn count_down (x:ref nat)
+requires pts_to x 'v
+ensures pts_to x (0 <: nat) //F* type inference infers this as [int]; force [nat]
+{
+    let mut keep_going = true;
+    while (
+        !keep_going
+    )
+    invariant b.
+      exists* (v:nat).
+        pts_to keep_going b **
+        pts_to x v **
+        pure (b == false ==> v == 0)
+    {
+        let n = !x;
+        if (n = 0)
+        {
+            keep_going := false;
+        }
+        else
+        {
+            x := n - 1;
+        }
+    }
+}
+
+fn count_down2 (x:ref nat)
+requires pts_to x 'v
+ensures pts_to x (0 <: nat)
+{
+    while (
+        let n = !x;
+        if (n = 0)
+        {
+            false
+        }
+        else
+        {
+            x := n - 1;
+            true
+        }
+    )
+    invariant b.
+      exists* (v:nat).
+        pts_to x v **
+        pure (b == false ==> v == 0)
+    { () }
+}
+
+fn count_down_loopy (x:ref nat)
+requires pts_to x 'v
+ensures pts_to x (0 <: nat)
+{
+    while (
+        let n = !x;
+        if (n = 0)
+        {
+            false
+        }
+        else
+        {
+            x := n + 1;
+            true
+        }
+    )
+    invariant b.
+      exists* (v:nat).
+        pts_to x v **
+        pure (b == false ==> v == 0)
+    { () }
+}
+
+(* See the 1949 paper by Alan Turing titled "Checking a Large Routine" *)
+fn multiply_by_repeated_addition (x y:nat)
+    requires emp
+    returns z:nat
+    ensures pure (z == x * y)
+{
+    let mut ctr : nat = 0;
+    let mut acc : nat = 0;
+    while (
+        let c = !ctr;
+        (c < x)
+    )
+    invariant b.
+    exists* (c:nat) (a:nat).
+        pts_to ctr c **
+        pts_to acc a **
+        pure (c <= x /\
+              a == (c * y) /\
+              b == (c < x))
+    {
+        let a = !acc;
+        acc := a + y;
+        let c = !ctr;
+        ctr := c + 1;
+    };
+    !acc
+}
+
+let rec sum (n:nat)
+: nat
+= if n = 0 then 0 else n + sum (n - 1)
+
+#push-options "--z3rlimit 20"
+noextract
+let rec sum_lemma (n:nat)
+: Lemma (sum n == n * (n + 1) / 2)
+= if n = 0 then ()
+  else
+    sum_lemma (n - 1)
+#pop-options
+
+#push-options "--z3cliopt 'smt.arith.nl=false'"
+
+fn isum (n:nat)
+requires emp
+returns z:nat
+ensures pure ((n * (n + 1) / 2) == z)
+{
+    let mut acc : nat = 0;
+    let mut ctr : nat = 0;
+    while (
+        let c = !ctr;
+        (c < n)
+    )
+    invariant b.
+    exists* (c:nat) (a:nat).
+        pts_to ctr c **
+        pts_to acc a **
+        pure (c <= n /\
+              a == sum c /\
+              b == (c < n))
+    {
+        let a = !acc;
+        let c = !ctr;
+        ctr := c + 1;
+        acc := a + c + 1;
+    };
+    //show_proof_state;
+    sum_lemma n; //call an F* lemma inside Pulse
+    //show_proof_state;
+    !acc;
+}
+
+#pop-options
+
+let rec fib (n:nat) : nat =
+  if n <= 1 then 1
+  else fib (n - 1) + fib (n - 2)
+
+fn rec fib_rec (n:pos) (out:ref (nat & nat))
+requires
+    pts_to out 'v
+ensures
+    exists* v.
+        pts_to out v **
+        pure (
+          fst v == fib (n - 1) /\
+          snd v == fib n
+        )
+{
+  if ((n = 1))
+  {
+    //type inference in Pulse doesn't work well here:
+    //it picks (1, 1) to have type (int & int)
+    //so we have to annotate
+    out := ((1 <: nat), (1 <: nat));
+  }
+  else
+  {
+    fib_rec (n - 1) out;
+    let v = !out;
+    out := (snd v, fst v + snd v);
+  }
+}
+
+fn fib_loop (k:pos)
+  requires emp
+  returns r:nat
+  ensures pure (r == fib k)
+{
+  let mut i : nat = 1;
+  let mut j : nat = 1;
+  let mut ctr : nat = 1;
+  while (
+    let c = !ctr;
+    (c < k)
+  )
+  invariant b .
+    exists* (vi:nat) (vj:nat) (vctr:nat).
+        pts_to i vi **
+        pts_to j vj **
+        pts_to ctr vctr **
+        pure (
+            1 <= vctr /\
+            vctr <= k /\
+            vi == fib (vctr - 1) /\
+            vj == fib vctr /\
+            b == (vctr < k)
+        )
+  {
+      let vi = !i;
+      let vj = !j;
+      let c = !ctr;
+      ctr := c + 1;
+      i := vj;
+      j := vi + vj;
+  };
+  !j
+}
+
+
+(******************************************************************************)
+(* Section: Mutable Arrays *)
+(******************************************************************************)
+
+(* [Pulse.Lib.Array.array t] is the basic array type.
+   [Pulse.Lib.Vec.vec t] is heap-allocated arrays.
+
+   We usually write functions on [Pulse.Lib.Array.array.t]  and use coercions to
+   convert between [vec t] and [array t].
+*)
+
+open Pulse.Lib.Pervasives
+open Pulse.Lib.Array
+
+module SZ = FStar.SizeT
+
+ //readi$
+fn read_i
+  (#[@@@ Rust_generics_bounds ["Copy"]] t:Type)
+  (arr:array t)
+  (#p:perm)
+  (#s:erased (Seq.seq t))
+  (i:SZ.t { SZ.v i < Seq.length s })
+  requires pts_to arr #p s
+  returns x:t
+  ensures pts_to arr #p s ** pure (x == Seq.index s (SZ.v i))
+{
+  arr.(i)
+}
+
+fn write_i
+  (#t:Type)
+  (arr:array t)
+  (#s:erased (Seq.seq t))
+  (x:t)
+  (i:SZ.t { SZ.v i < Seq.length s })
+  requires pts_to arr s
+  ensures pts_to arr (Seq.upd s (SZ.v i) x)
+{
+  arr.(i) <- x
+}
+
+[@@ expect_failure]
+fn write_ip (#t:Type) (arr:array t) (#p:perm) (#s:erased _) (x:t)
+            (i:SZ.t { SZ.v i < Seq.length s })
+  requires pts_to arr #p s
+  ensures pts_to arr #p (Seq.upd s (SZ.v i) x)
+{
+  arr.(i) <- x
+}
+
+module A = Pulse.Lib.Array
+module R = Pulse.Lib.Reference
+open FStar.SizeT
+
+fn compare
+  (#[@@@ Rust_generics_bounds ["PartialEq"; "Copy"]] t:eqtype)
+  #p1 #p2
+  (a1 a2:A.array t)
+  (l:SZ.t)
+  requires (
+    A.pts_to a1 #p1 's1 **
+    A.pts_to a2 #p2 's2 **
+    pure (Seq.length 's1 == Seq.length 's2 /\ Seq.length 's2 == SZ.v l)
+  )
+  returns res:bool
+  ensures (
+    A.pts_to a1 #p1 's1 **
+    A.pts_to a2 #p2 's2 **
+    pure (res <==> Seq.equal 's1 's2)
+  )
+{
+  let mut i = 0sz;
+  while (
+    let vi = !i;
+    if (vi <^ l) {
+      let v1 = a1.(vi);
+      let v2 = a2.(vi);
+      (v1 = v2)
+    } else {
+      false
+    }
+  )
+  invariant b.
+  exists* vi. (
+    R.pts_to i vi **
+    A.pts_to a1 #p1 's1 **
+    A.pts_to a2 #p2 's2 **
+    pure (
+      SZ.v vi <= SZ.v l /\
+      (b == (SZ.v vi < SZ.v l && Seq.index 's1 (SZ.v vi) = Seq.index 's2 (SZ.v vi))) /\
+      (forall (i:nat). i < SZ.v vi ==> Seq.index 's1 i == Seq.index 's2 i)
+    )
+  )
+  {
+    let vi = !i;
+    i := vi +^ 1sz
+  };
+  let vi = !i;
+  let res = vi = l;
+  res
+}
+
+(* [copy] contents of [a2] tp [a1] *)
+fn copy
+  (#[@@@ Rust_generics_bounds ["Copy"]] t:Type0)
+  (a1 a2:A.array t)
+  (l:SZ.t)
+  (#p2:perm)
+  requires (
+    A.pts_to a1 's1 **
+    A.pts_to a2 #p2 's2 **
+    pure (Seq.length 's1 == Seq.length 's2 /\ Seq.length 's2 == SZ.v l)
+  )
+  ensures (
+    (exists* s1. A.pts_to a1 s1 ** pure (Seq.equal s1 's2)) **
+    A.pts_to a2 #p2 's2
+  )
+{
+  let mut i = 0sz;
+  while (
+    let vi = !i;
+    (vi <^ l)
+  )
+  invariant b.
+  exists* vi s1. (
+    R.pts_to i vi **
+    A.pts_to a1 s1 **
+    A.pts_to a2 #p2 's2 **
+    pure (
+      Seq.length s1 == Seq.length 's2 /\
+      SZ.v vi <= SZ.v l /\
+      (b == (SZ.v vi < SZ.v l)) /\
+      (forall (i:nat). i < SZ.v vi ==> Seq.index s1 i == Seq.index 's2 i)
+    )
+  )
+  {
+    let vi = !i;
+    let v = a2.(vi);
+    a1.(vi) <- v;
+    i := vi +^ 1sz
+  }
+}
+
+fn copy2
+  (#[@@@ Rust_generics_bounds ["Copy"]] t:Type0)
+  (a1 a2:A.array t)
+  (l:SZ.t)
+  (#p2:perm)
+  requires (
+    A.pts_to a1 's1 **
+    A.pts_to a2 #p2 's2 **
+    pure (Seq.length 's1 == Seq.length 's2 /\ Seq.length 's2 == SZ.v l)
+  )
+  ensures (
+    A.pts_to a1 's2 **
+    A.pts_to a2 #p2 's2 //Simpler post-condition
+  )
+{
+  let mut i = 0sz;
+  while (
+    let vi = !i;
+    (vi <^ l)
+  )
+  invariant b.
+  exists* vi s1. (
+    R.pts_to i vi **
+    A.pts_to a1 s1 **
+    A.pts_to a2 #p2 's2 **
+    pure (
+      Seq.length s1 == Seq.length 's2 /\
+      SZ.v vi <= SZ.v l /\
+      (b == (SZ.v vi < SZ.v l)) /\
+      (forall (i:nat). i < SZ.v vi ==> Seq.index s1 i == Seq.index 's2 i)
+    )
+  )
+  {
+    let vi = !i;
+    let v = a2.(vi);
+    a1.(vi) <- v;
+    i := vi +^ 1sz
+  };
+  // after the loop
+  with v1 s1. _; //bind existentially bound witnesses from the invariant
+  Seq.lemma_eq_elim s1 's2; //call an F* lemma to prove that s1 == 's2
+  ()
+}
+
+(* Stack allocated arrays *)
+
+fn compare_stack_arrays ()
+  requires emp
+  ensures emp
+{
+  (* [| v; n |] allocates an array of size [n] with all elements set to [v] on
+     the stack. The size [n] must be a compile time constant. *)
+
+  // |- emp
+  let mut a1 = [| 0; 2sz |];
+  // a1:array int |- pts_to a1 (Seq.create 0 (SZ.v 2))
+  let mut a2 = [| 0; 2sz |];
+  // a1 a2:array int |- pts_to a1 (Seq.create 0 (SZ.v 2)) ** pts_to a2 (Seq.create 0 (SZ.v 2))
+  let b = compare a1 a2 2sz;
+  assert (pure b)
+}
+
+[@@ expect_failure]
+fn ret_stack_array ()
+  requires emp
+  returns a:array int
+  ensures pts_to a (Seq.create 2 0)
+{
+  let mut a1 = [| 0; 2sz |];
+  a1  // cannot prove pts_to a (Seq.create 0 2) in the context emp
+}
+
+module V = Pulse.Lib.Vec
+
+fn heap_arrays ()
+  requires emp
+  returns a:V.vec int
+  ensures V.pts_to a (Seq.create 2 0)
+{
+  let a1 = V.alloc 0 2sz;
+  let a2 = V.alloc 0 2sz;
+  V.free a1;
+  a2  // returning vec is ok
+}
+
+fn copy_app ([@@@ Rust_mut_binder] v:V.vec int)
+  requires exists* s. V.pts_to v s ** pure (Seq.length s == 2)
+  ensures V.pts_to v (Seq.create 2 0)
+{
+  let mut a = [| 0; 2sz |];
+  // v, s |- V.pts_to v s ** ...
+  //show_proof_state;
+  V.to_array_pts_to v;
+  //show_proof_state;
+  // v, s |- pts_to (vec_to_array v) s ** ...
+  copy2 (V.vec_to_array v) a 2sz;
+  // v, s |- pts_to (vec_to_array v) (Seq.create 2 0) ** ...
+  V.to_vec_pts_to v
+  // v, s |- V.pts_to v (Seq.create 2 0) ** ...
+}
+
+(******************************************************************************)
+(* Section: Ghost computations *)
+(******************************************************************************)
+
+(*
+
+  + Ghost computatations -- pulse equivalent of Lemmas
+  + Ghost state -- erased (computationally irrelevant) but mutable
+
+*)
+
+[@@expect_failure]
+fn incr_erased_non_ghost (x:erased int)
+requires emp
+returns y:int
+ensures emp ** pure (y == x + 1)
+{
+  let x = reveal x;
+  (x + 1)
+}
+
+ghost
+fn incr_erased (x:erased int)
+requires emp
+returns y:int
+ensures emp ** pure (y == x + 1)
+{
+  let x = reveal x;
+  (x + 1)
+}
+
+[@@expect_failure]
+fn use_incr_erased (x:erased int)
+requires emp
+returns y:int
+ensures emp ** pure (y == x + 1)
+{
+  incr_erased x;
+}
+
+fn use_incr_erased (x:erased int)
+requires emp
+returns y:erased int //erased here
+ensures emp ** pure (y == x + 1)
+{
+  ghost
+  fn wrap (x:erased int)
+  requires emp
+  returns y:erased int
+  ensures emp ** pure (y == x + 1)
+  {
+    let y = incr_erased x;
+    hide y
+  };
+  wrap x
+}
+
+fn use_incr_erased_alt (x:erased int)
+requires emp
+returns y:erased int
+ensures emp ** pure (y == x + 1)
+{
+  call_ghost incr_erased x; //Pulse.Lib.Pervasives.call_ghost
+}
+
+(* using [call_ghost] with multi-argument functions *)
+ghost
+fn add_erased (x y:erased int)
+requires emp
+returns z:int
+ensures emp ** pure (z == x + y)
+{
+  let x = reveal x;
+  let y = reveal y;
+  (x + y)
+}
+
+fn use_add_erased (x y:erased int)
+requires emp
+returns z:erased int
+ensures emp ** pure (z == x + y)
+{
+  call_ghost (add_erased x) y
+}
+
+(* Best to define erased functions rather than using [call_ghost] *)
+ghost
+fn add_erased_erased (x y:erased int)
+requires emp
+returns z:erased int
+ensures emp ** pure (z == x + y)
+{
+  let x = reveal x;
+  let y = reveal y;
+  hide (x + y)
+}
+
+(* Some primitive ghost functions.
+
+   We have seen a few previously: [elim_pts_to_or_null_none] and friends.
+   [rewrite] also.
+*)
+
+(* Here's the signature of [rewrite] *)
+ghost
+fn __rewrite (p q:slprop)
+requires p ** pure (p == q)
+ensures q
+
+(* Many other primitives are also written using [rewrite] and [ghost]
+   computations. For example, [fold], [unfold], etc. *)
+
+(* Recursive predicates *)
+
+open Pulse.Lib.Reference
+
+let rec all_at_most (l:list (ref nat)) (n:nat)
+: slprop
+= match l with
+  | [] -> emp
+  | hd::tl -> exists* (i:nat). pts_to hd i ** pure (i <= n) ** all_at_most tl n
+
+(* Recursive Ghost Lemmas *)
+
+(* Let's weaken [all_at_most l n] to [all_at_most l m] when [n <= m] *)
+
+ghost
+fn rec weaken_at_most (l:list (ref nat)) (n:nat) (m:nat)
+requires all_at_most l n ** pure (n <= m)
+ensures all_at_most l m
+decreases l //decreases clause is mandatory
+{
+  match l {
+    Nil -> { //No syntactic support for []
+      unfold (all_at_most [] n);
+      //show_proof_state;
+      fold (all_at_most [] m);
+    }
+    Cons hd tl -> { //No syntactic support for [hd::tl]
+      unfold (all_at_most (hd::tl) n);
+      weaken_at_most tl n m;
+      //show_proof_state;
+      fold (all_at_most (hd::tl) m);
+    }
+  }
+}
+
+(* Mutable ghost variable and somwhat contrived example.
+
+   Generally, mutable ghost variables from [Pulse.Lib.GhostReference] are useful
+   for concurrent programs. Let illustrate this with a sequential program.
+
+   Goal: share a mutable ref to a function, allow it to be modified internally,
+   but when you get it back the value is reset to the original value.
+*)
+
+(* Can be done simplyf with *)
+
+fn uses_but_resets #a (x:ref a)
+requires pts_to x 'v
+ensures pts_to x 'v
+
+module GR = Pulse.Lib.GhostReference
+
+(* Here's another contrived way. Define the [correlated] predicate to
+   represent the fact that two references are correlated. *)
+let correlated #a (x:ref a) (y:GR.ref a) (v:a)=
+  pts_to x v ** GR.pts_to y #0.5R v
+
+fn use_temp (x:ref int) (y:GR.ref int)
+requires exists* v0. correlated x y v0
+ensures exists* v1. correlated x y v1
+{
+  unfold correlated;
+  let v = !x;
+  x := 17; //temporarily mutate x, give to to another function to use with full perm
+  x := v; //but, we're forced to set it back to its original value
+  fold correlated;
+}
+
+#push-options "--print_implicits"
+fn use_correlated ()
+requires emp
+ensures emp
+{
+  let mut x = 17;
+  let g = GR.alloc 17;
+  GR.share g;
+  fold correlated;  // GR.pts_to g #0.5R 17 ** correlated x g 17
+  use_temp x g;     // GR.pts_to g #0.5R 17 ** correlated x g ?v1
+  unfold correlated; // GR.pts_to g #0.5R 17 ** GR.pts_to g #0.5R ?v1 ** pts_to x ?v1
+  GR.gather g;       //this is the crucial step
+                     // GT.pts_to g 17 ** pure (?v1 == 17) ** pts_to x ?v1
+  //show_proof_state;
+  assert (pts_to x 17);
+  GR.free g;
+}
+#pop-options
+
+(******************************************************************************)
+(* Section: Ghost computations *)
+(******************************************************************************)
+
+fn apply (#a:Type0)
+         (#b:a -> Type0)
+         (#pre:a -> slprop)
+         (#post: (x:a -> b x -> slprop))
+         (f: (x:a -> stt (b x) (pre x) (fun y -> post x y)))
+         //[stt] can read and write the state, run forever.
+         (x:a)
+requires pre x
+returns y:b x
+ensures post x y
+{
+  f x
+}
+
+ghost
+fn apply_ghost
+         (#a:Type0)
+         (#b:a -> Type0)
+         (#pre:a -> slprop)
+         (#post: (x:a -> b x -> slprop))
+         (f: (x:a -> stt_ghost (b x) emp_inames (pre x) (fun y -> post x y)))
+         (* [stt_ghost] can read and write ghost state, and must terminate. *)
+         (* [emp_inames] the set of invariants that a computation may open, which
+            is empty here. Ignore this argument for now. *)
+         (x:a)
+requires pre x
+returns y:b x
+ensures post x y
+{
+  f x
+}
+
+(* Universes *)
+
+val stt (a:Type u#a) (i:inames) (pre:slprop) (post: a -> slprop)
+  : Type u#0 //Universe 0 -- infinite loops, can be stored in references
+
+val stt_ghost (a:Type u#a) (i:inames) (pre:slprop) (post: a -> slprop)
+  : Type u#4 //Universe 4 -- total and cannot be stored in references.
+
+(* For more info on universes, see
+   https://fstar-lang.org/tutorial/book/part4/part4_div.html#part4-div *)
+
+noeq
+type ctr = {
+    inv: int -> slprop;
+    next: i:erased int -> stt int (inv i) (fun y -> inv (i + 1) ** pure (y == reveal i));
+    destroy: i:erased int -> stt unit (inv i) (fun _ -> emp)
+}
+
+fn new_counter ()
+requires emp
+returns c:ctr
+ensures c.inv 0
+{
+    open Pulse.Lib.Box;
+    let x = alloc 0;
+    fn next (i:erased int)
+    requires pts_to x i
+    returns j:int
+    ensures pts_to x (i + 1) ** pure (j == reveal i)
+    {
+        let j = !x;
+        x := j + 1;
+        j
+    };
+    fn destroy (i:erased int)
+    requires pts_to x i
+    ensures emp
+    {
+       free x
+    };
+    let c = { inv = pts_to x; next; destroy };
+    rewrite (pts_to x 0) as (c.inv 0);
+    c
+}
+
+fn test_counter ()
+requires emp
+ensures emp
+{
+    let c = new_counter ();
+    let next = c.next;
+    let destroy = c.destroy;
+    let x = next _; //Need to use [next] instead of [c.next]; TODO in Pulse.
+    assert pure (x == 0);
+    let x = next _;
+    assert pure (x == 1);
+    destroy _;
+}
+
+
+(******************************************************************************)
+(* Section: Implication and Universal Quantification *)
+(******************************************************************************)
+
+(*
+   + Implication in Pulse is (@==>) to be read as "trade" operator.
+   + Related to `--*` magic wand operator in the separation logic literature.
+
+            p ** p @==> q                   r ** p |- q
+           -------------- [Elim]            ----------------- [Intro]
+                 q                            |- p @==> q
+*)
+
+module I = Pulse.Lib.Stick.Util
+open Pulse.Lib.Stick
+module GR = Pulse.Lib.GhostReference
+open GR
+
+ghost
+fn __elim (p q:slprop)
+requires p ** (p @==> q)
+ensures q
+
+ghost
+fn __intro (p q r:slprop)
+           (elim: unit -> stt_ghost unit emp_inames (r ** p) (fun _ -> q))
+requires r
+ensures p @==> q
+
+let regain_half #a (x:GR.ref a) (v:a) =
+  pts_to x #0.5R v @==> pts_to x v
+(* You can gain full permissions if you have half permissions?! WAT!
+
+   Trick is to know that [regain_half] holds the rest of the permission
+   [exists* u. pts_to x #0.5R u] internally, packaged during introduction. *)
+
+ghost
+fn intro_regain_half (x:GR.ref int)
+requires pts_to x 'v
+ensures pts_to x #0.5R 'v ** regain_half x 'v
+{
+  ghost
+  fn aux ()
+  requires pts_to x #0.5R 'v ** pts_to x #0.5R 'v
+  ensures pts_to x 'v
+  {
+    GR.gather x;
+  };
+  GR.share x;
+  I.intro _ _ _ aux;
+  //show_proof_state;
+  fold regain_half;
+}
+
+ghost
+fn use_regain_half (x:GR.ref int)
+requires pts_to x #0.5R 'v ** regain_half x 'v
+ensures pts_to x 'v
+{
+  unfold regain_half;
+  I.elim _ _;
+}
+
+(* Want to clarify that in the simple usage (@==>) hasn't brought us much *)
+
+(* Universal Quantification *)
+
+(* Consider
+
+  let regain_half #a (x:GR.ref a) (v:a) =
+    pts_to x #0.5R v @==> pts_to x v
+
+  from earlier. This definition is not general. [v] at the time of elimintaion
+  has to be the same [v] at the time of introduction.
+
+  Generalise with [exists*]?
+
+*)
+
+let regain_half' #a (x:GR.ref a) (v:a) =
+  (exists* u. pts_to x #0.5R u) @==> pts_to x v
+
+(* Better but, no relation between [u] and [v]. *)
+
+(* We can use [forall] to express the relation between [u] and [v]. *)
+
+let regain_half_q #a (x:GR.ref a) =
+  forall* u. pts_to x #0.5R u @==> pts_to x u
+
+module FA = Pulse.Lib.Forall.Util
+
+(*
+
+//Elimination form
+ghost
+fn FA.elim (#a:Type) (#p:a->vprop) (v:a)
+requires (forall* x. p x)
+ensures p v
+
+//Introduction form
+ghost
+fn FA.intro (#a:Type) (#p:a->vprop)
+     (v:vprop)
+     (f_elim : (x:a -> stt_ghost unit emp_inames v (fun _ -> p x)))
+requires v
+ensures (forall* x. p x)
+
+//Common to use [trades] and [forall] together. Utlility library has:
+
+ghost
+fn elim_forall_imp (#a:Type0) (p q: a -> vprop) (x:a)
+requires (forall* x. p x @==> q x) ** p x
+ensures q x
+
+ghost
+fn intro_forall_imp (#a:Type0) (p q: a -> vprop) (r:vprop)
+         (elim: (u:a -> stt_ghost unit emp_inames
+                          (r ** p u)
+                          (fun _ -> q u)))
+requires r
+ensures forall* x. p x @==> q x
+
+*)
+
+ghost
+fn intro_regain_half_q (x:GR.ref int)
+requires pts_to x 'v
+ensures pts_to x #0.5R 'v ** regain_half_q x
+{
+  ghost
+  fn aux1 (u:int)
+  requires pts_to x #0.5R 'v ** pts_to x #0.5R u
+  ensures pts_to x u
+  {
+    gather x;
+  };
+  GR.share x;
+  FA.intro_forall_imp _ _ _ aux1;
+  fold regain_half_q;
+}
+
+
+ //use_regain_half_q$
+ghost
+fn use_regain_half_q (x:GR.ref int)
+requires pts_to x #0.5R 'u ** regain_half_q x
+ensures pts_to x 'u
+{
+  unfold regain_half_q;
+  FA.elim #_ #(fun u -> pts_to x #0.5R u @==> pts_to x u) 'u;
+  //Using FA.elim is quite verbose: we need to specify the quantifier term
+  //again. The way Pulse uses F*’s unifier currently does not allow it to
+  //properly find solutions to some higher-order unification problems.
+  I.elim _ _;
+}
+
+(* Trades and Ghost Steps *)
+
+(* TODO KC: Complex; Study; Explain. *)
+
+(* One can package any ghost computation into a trade. *)
+
+(* One can trade a half permission to pts_to x #one_half u for a full permission
+   to a different value pts_to x v. *)
+let can_update (x:GR.ref int) =
+  forall* u v. pts_to x #0.5R u @==>
+               pts_to x v
+
+ghost
+fn make_can_update (x:GR.ref int)
+requires pts_to x 'w
+ensures pts_to x #0.5R 'w ** can_update x
+{
+  ghost
+  fn aux (u:int)
+  requires pts_to x #0.5R 'w
+  ensures forall* v. pts_to x #0.5R u @==> pts_to x v
+  {
+    ghost
+    fn aux (v:int)
+    requires pts_to x #0.5R 'w ** pts_to x #0.5R u
+    ensures pts_to x v
+    {
+      gather x;
+      x := v;
+    };
+    FA.intro_forall_imp _ _ _ aux;
+  };
+  share x;
+  FA.intro _ aux;
+  fold (can_update x);
+}
+
+
+ghost
+fn update (x:GR.ref int) (k:int)
+requires pts_to x #0.5R 'u ** can_update x
+ensures pts_to x #0.5R k ** can_update x
+{
+  unfold can_update;
+  FA.elim #_ #(fun u -> forall* v. pts_to x #0.5R u @==> pts_to x v) 'u;
+  FA.elim #_ #(fun v -> pts_to x #0.5R 'u @==> pts_to x v) k;
+  I.elim _ _;
+  make_can_update x;
+}
+
+
+(******************************************************************************)
+(* Section: Linked Lists *)
+(******************************************************************************)
+
+open Pulse.Lib.Pervasives
+open FStar.List.Tot
+
+noeq
+type node (t:Type0) = {
+    head : t;
+    tail : llist t;
+}
+
+and node_ptr (t:Type0) = ref (node t)
+
+//A nullable pointer to a node
+and llist (t:Type0) = option (node_ptr t)
+
+(* Representation predicate linking linked list to logic representation *)
+let rec is_list #t (x:llist t) (l:list t)
+: Tot slprop (decreases l)
+= match l with
+  | [] -> pure (x == None)
+  | head::tl ->
+    exists* (p:node_ptr t) (tail:llist t).
+      pure (x == Some p) **
+      pts_to p { head; tail } **
+      is_list tail tl
+
+(* Some boilerplate. TODO: Pulse will automate later. *)
+
+ghost
+fn elim_is_list_nil (#t:Type0) (x:llist t)
+requires is_list x 'l ** pure ('l == [])
+ensures pure (x == None)
+{
+   rewrite each 'l as Nil #t;
+   unfold (is_list x [])
+}
+
+ghost
+fn intro_is_list_nil (#t:Type0) (x:llist t)
+requires pure (x == None)
+ensures is_list x []
+{
+    fold (is_list x []);
+}
+
+ghost
+fn elim_is_list_cons (#t:Type0) (x:llist t) (l:list t) (head:t) (tl:list t)
+requires is_list x l ** pure (l == head::tl)
+ensures (
+  exists* (p:node_ptr t) (tail:llist t).
+    pure (x == Some p) **
+    pts_to p { head; tail } **
+    is_list tail tl
+)
+{
+  rewrite each l as (head::tl);
+  unfold (is_list x (head::tl));
+}
+
+ghost
+fn intro_is_list_cons (#t:Type0) (x:llist t) (v:node_ptr t)
+                      (#node:node t) (#tl:list t)
+requires
+  pts_to v node **
+  is_list node.tail tl **
+  pure (x == Some v)
+ensures
+  is_list x (node.head::tl)
+{
+    rewrite (pts_to v node) as (pts_to v { head=node.head; tail=node.tail });
+    fold (is_list x (node.head::tl));
+}
+
+(* Case analyzing a nullable pointer a.k.a more helper functions *)
+
+let is_list_cases #t (x:llist t) (l:list t)
+: slprop
+= match x with
+  | None -> pure (l == [])
+  | Some v ->
+    exists* (n:node t) (tl:list t).
+      pts_to v n **
+      pure (l == n.head::tl) **
+      is_list n.tail tl
+
+ghost
+fn cases_of_is_list #t (x:llist t) (l:list t)
+requires is_list x l
+ensures is_list_cases x l
+{
+  match l {
+    Nil -> {
+      unfold (is_list x []);
+      fold (is_list_cases None l);
+      rewrite each (None #(ref (node t))) as x; //can be commented out?
+    }
+    Cons head tl -> {
+      unfold (is_list x (head::tl));
+      with w tail. _;
+      let v = Some?.v x;
+      rewrite each w as v;
+      rewrite each tail as (({ head; tail }).tail) in (is_list tail tl);
+      fold (is_list_cases (Some v) l);
+      //show_proof_state;
+      rewrite each (Some #(ref (node t)) v) as x;
+    }
+  }
+}
+
+ghost
+fn is_list_case_none (#t:Type) (x:llist t) (#l:list t)
+requires is_list x l ** pure (x == None)
+ensures is_list x l ** pure (l == [])
+{
+  cases_of_is_list x l;
+  rewrite each x as (None #(ref (node t)));
+  unfold (is_list_cases None l);
+  fold (is_list x []);
+}
+
+ghost
+fn is_list_case_some (#t:Type) (x:llist t) (v:node_ptr t) (#l:list t)
+requires is_list x l ** pure (x == Some v)
+ensures
+  exists* (node:node t) (tl:list t).
+    pts_to v node **
+    is_list node.tail tl **
+    pure (l == node.head::tl)
+{
+  cases_of_is_list x l;
+  rewrite each x as (Some v);
+  unfold (is_list_cases (Some v) l);
+}
+
+(* Length, recursively *)
+
+fn rec length (#t:Type0) (x:llist t)
+requires is_list x 'l
+returns n:nat
+ensures is_list x 'l ** pure (n == List.Tot.length 'l)
+{
+  match x {
+    None -> {
+      //show_proof_state;
+      // |- is_list None 'l
+      is_list_case_none x;
+      // |- is_list None 'l ** pure ('l == [])
+      0
+    }
+    Some vl -> {
+      // |- is_list (Some vl) 'l ** pure (x == Some vl)
+      is_list_case_some x vl;
+      // |- (exists* (node:node t) (tl:list t). pts_to vl node **
+      //                                        is_list node.tail tl **
+      //                                        pure ('l == node.head :: tl)) **
+      //                                        pure (x == Some vl)
+      with _node _tl. _;
+      // |- pts_to vl _node ** is_list _node.tail _tl **
+      //    pure ('l == _node.head :: _tl) ** pure (x == Some vl)
+      let node = !vl;
+      rewrite each _node as node;
+      // |- pts_to vl node ** is_list node.tail tl ** pure ('l == node.head :: _tl)
+      let n = length node.tail;
+      //show_proof_state;
+      // |- pts_to vl node ** is_list node.tail tl ** pure ('l == node.head :: _tl) ** pure (x == Some vl)
+      //    pure (n == length node.tail) ** pure (n == List.Tot.length tl)
+      intro_is_list_cons x vl;
+      // |- is_list x (node.head :: _tl)
+      (1 + n)
+    }
+  }
+}
+
