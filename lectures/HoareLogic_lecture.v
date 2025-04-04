@@ -820,8 +820,9 @@ Definition trsys_of (st : heap * valuation * cmd) := {|
 (* We'll characterize *unstuckness* in roughly the same way as we did for
  * lambda-calculus type soundness: the program is done (reached [Skip]) or can
  * take a step. *)
+ 
 Definition unstuck (st : heap * valuation * cmd) :=
-  snd st = Skip
+  snd st = Skip (* what is the [snd] of a triple??? *)
   \/ exists st', step st st'.
 
 (* A convenient property of Hoare triples: they rule out stuckness, regardless
@@ -932,11 +933,12 @@ Theorem hoare_triple_invariant : forall P c Q h v,
   -> invariantFor (trsys_of (h, v, c)) unstuck.
 Proof.
   simplify.
+  Check invariant_weaken.
   apply invariant_weaken 
     with (invariant1 := fun st => {{h&v ~> h = fst (fst st)
                                         /\ v = snd (fst st)}}
                                   snd st
-                                  {{_&_ ~> True}}).
+                                  {{_&_ ~> True}}). (* shape of preservation lemma *)
 
   apply invariant_induction; simplify.
 

@@ -4,7 +4,7 @@ open FStar.All
 open FStar.Ref
 
 val incr : r:ref int -> FStar.All.St unit
-let incr r =
+ let incr r =
   (r := (!r + 1))
 
 val incr2 : r:ref int -> ST unit (requires (fun h0 -> True))

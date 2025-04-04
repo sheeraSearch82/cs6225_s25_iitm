@@ -56,7 +56,8 @@ module ST (* Used for programming *)
 val incr3 : r:ref int -> ST unit (requires (fun h0 -> True))
   (ensures (fun h0 _ h2 -> exists h1 x. modifies !{ } h0 h1 /\ x == sel h0 r /\
                                         modifies !{r} h1 h2 /\ sel h2 r == x+1))
-let incr3 r = let x = !r in r := x + 1
+let incr3 r = let x = !r in
+r := x + 1
 
 (* The post-condition can be simplified to *)
 
@@ -128,15 +129,17 @@ let swap r1 r2 =
       From (P2) we know that  `sel h2 r1 == sel h1 r2` (A)
       From (P1) we know that  modifies !{} h0 h1
         which by definition gives us  sel h1 r2 == sel h0 r2 (B)
+                                                       ^^
       From (P3) we know that  modifies !{r2} h2 h3
-        which by definition gives us  sel h2 r1 == sel h3 r1 (C)
+        which by definition gives us sel h2 r1 == sel h3 r1 (C)
+                                     [r1 doesn't change in h2 -> h3]
       We conclude by transitivity from (A)+(B)+(C) *)
 
 (* This variant is correct even when r1 and r2 are aliased *)
 
 (* Here is a funny way to do swap *)
 
-val swap_add_sub : r1:ref int -> r2:ref int -> ST unit
+val swap_add_sub : r1:ref nat -> r2:ref nat -> ST unit
     (requires (fun h0 -> addr_of r1 <> addr_of r2 ))
     (ensures (fun h0 _ h1 -> modifies !{r1,r2} h0 h1 /\
                             sel h1 r1 == sel h0 r2 /\ sel h1 r2 == sel h0 r1))
@@ -152,8 +155,12 @@ let swap_add_sub r1 r2 =
 Exercise: sketch hand proof that this code is correct
 *)
 
+(* This is the correct version of swap using an intermediate heap location *)
+(* It is correct even when r1 and r2 are aliased *)
+
+(* Swap using an intermediate heap location needs more anti-constraints! *)
 val swap' : t:ref int -> r1:ref int -> r2:ref int -> ST unit
-    (requires (fun h0 -> (addr_of r1 <> addr_of r2) /\
+    (requires (fun h0 -> //(addr_of r1 <> addr_of r2) /\
                          (addr_of r1 <> addr_of t) /\
                          (addr_of r2 <> addr_of t)))
     (ensures (fun h0 _ h3 -> modifies !{t,r1,r2} h0 h3 /\
@@ -164,8 +171,6 @@ let swap' t r1 r2 =
   r2 := !t
 
   (* Need to mention that all the locations are distinct *)
-
-  
 
 (*******************************************************************************)
 
