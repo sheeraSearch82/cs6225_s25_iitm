@@ -94,6 +94,8 @@ ensures pts_to x (i + 1)
     x := v + 1;
 }
 
+(* STOPPED HERE 04/04/25 *)
+
 (*
 
 Separation Logic Rules
