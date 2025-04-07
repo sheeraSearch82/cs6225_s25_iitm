@@ -1,4 +1,4 @@
-module PulseIntro
+module PulseIntroLecture
 #lang-pulse
 open Pulse
 
@@ -78,7 +78,7 @@ fn five' (x : ref int)
 }
 
 fn incr (x:ref int)
-requires pts_to x 'i (* implicitly bound logical variable *)
+requires pts_to x 'i
 ensures pts_to x ('i + 1)
 {
     let v = !x;
@@ -93,6 +93,8 @@ ensures pts_to x (i + 1)
     let v = !x;
     x := v + 1;
 }
+
+(* STOPPED HERE 04/04/25 *)
 
 (*
 
@@ -136,9 +138,10 @@ heaps that they accept.
 
 fn incr_frame (x y:ref int)
 requires pts_to x 'i ** pts_to y 'j
-ensures pts_to x ('i + 1) ** pts_to y 'j
+ensures pts_to x ('i + 1) ** pts_to y ('j + 1)
 {
    incr x;
+   incr y;
 }
 
 (* In fact, Pulse lets us use the frame rule with any `f:slprop`, and we get,
@@ -165,7 +168,8 @@ ensures pts_to x ('i + 1) ** f
 *)
 
 (* [ref t] type is agnostic to whether it is in heap or stack. Comes from
-   [Pulse.Lib.Reference.ref t] *)
+   [Pulse.Lib.Reference.ref t]. We write programs over [ref t] and then use it
+   with both Stack and Heap references. *)
 
 fn swap #a (r0 r1:ref a)
 requires pts_to r0 'v0 ** pts_to r1 'v1
@@ -248,7 +252,6 @@ ensures pts_to r (4 * 'v)
 {
     let v1 = !r; // Env=v1:int; _:squash (v1 == 'v)       Ctxt= pts_to r v1
     add r v1;    // ...                                   Ctxt= pts_to r (v1 + v1)
-    show_proof_state;
     let v2 = !r; // Env=...; v2:int; _:squash(v2==v1+v1)  Ctxt= pts_to r v2
     add r v2;    // Env=...                               Ctxt= pts_to r (v2 + v2)
                  // ..                                    Ctxt= pts_to r (4 * 'v)
@@ -264,6 +267,8 @@ ensures pts_to r (4 * 'v)
     add r (!r);
     add r (!r);
 }
+
+(* STOPPED HERE: 07/04/25 *)
 
 (* Fractional Permissions *)
 
@@ -508,11 +513,11 @@ fn double_alt (r:ref (int & int))
 requires pts_to_diag r 'v
 ensures pts_to_diag r (2 * 'v)
 {
-  unfold pts_to_diag;
+  unfold pts_to_diag; //NOTE: arugments not provided
   let v = !r;
   let v2 = fst v + snd v;
   r := (v2, v2);
-  fold pts_to_diag;
+  fold pts_to_diag; //NOTE: arugments not provided
 }
 
 (* Mutable points *)
@@ -532,7 +537,7 @@ fn move (p:point) (dx:int) (dy:int)
 requires is_point p 'xy
 ensures is_point p (fst 'xy + dx, snd 'xy + dy)
 {
-  unfold is_point;
+  unfold is_point; //NOTE: arguments are not provided
   let x = !p.x;
   let y = !p.y;
   p.x := x + dx;
@@ -542,6 +547,7 @@ ensures is_point p (fst 'xy + dx, snd 'xy + dy)
     //Pulse cannot infer the instantiation of [is_point] when folding it.
 }
 
+(* Package into convenient helper function *)
 ghost
 fn fold_is_point (p:point)
 requires pts_to p.x 'x ** pts_to p.y 'y
@@ -1994,7 +2000,6 @@ But, we have a permission accounting problem:
 The solution is to a "trade".
 
 *)
-
 
 fn tail (#t:Type) (x:llist t)
 requires is_list x 'l ** pure (Some? x) //x is a non-null pointer

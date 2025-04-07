@@ -179,7 +179,9 @@ Module Ulc.
   Lemma subst_m_canonical' : forall m n,
     subst m "m" (canonical' n) = canonical' n.
   Proof.
-    induct n; simplify; equality.
+    induct n; 
+    simplify; 
+    equality.
   Qed.
 
   (* This inductive proof is the workhorse for the next result, so let's skip
@@ -532,10 +534,13 @@ Module Stlc.
     repeat (econstructor; simplify).
   Qed.
 
-  Example eleven : has_ty $0 ((\"n", \"m", "n" ^+^ "m") @ 7 @ 4) Nat.
+  Example eleven : exists t, has_ty $0 ((\"n", \"m", "n" ^+^ "m") @ 7 @ 4) t.
   Proof.
+    eexists.
     repeat (econstructor; simplify).
   Qed.
+  
+  Print eleven.
 
   Example seven_the_long_way : has_ty $0 ((\"x", "x") @ (\"x", "x") @ 7) Nat.
   Proof.
@@ -845,12 +850,12 @@ Module Stlc.
     apply invariant_induction; simplify.
     equality.
 
-    eapply preservation.
+    eapply preservation. (* preservation *)
     eassumption.
     assumption.
 
     simplify.
-    eapply progress.
+    eapply progress. (* progress *)
     eassumption.
   Qed.
 

@@ -47,12 +47,12 @@ Module Stlc.
   Inductive plug : context -> exp -> exp -> Prop :=
   | PlugHole : forall e, plug Hole e e
   | PlugPlus1 : forall e e' C e2,
-    plug C e e'
-    -> plug (Plus1 C e2) e (Plus e' e2)
+    plug C e e' (* C[e] = e' *)
+    -> plug (Plus1 C e2) e (Plus e' e2) (* (C + e2)[e] = e' + e2 *)
   | PlugPlus2 : forall e e' v1 C,
     value v1
-    -> plug C e e'
-    -> plug (Plus2 v1 C) e (Plus v1 e')
+    -> plug C e e' (* C[e] = e' *)
+    -> plug (Plus2 v1 C) e (Plus v1 e') (* (v1 + C)[e] = v1 + e' *)
   | PlugApp1 : forall e e' C e2,
     plug C e e'
     -> plug (App1 C e2) e (App e' e2)
@@ -112,7 +112,6 @@ Module Stlc.
   Local Hint Constructors value plug step0 step has_ty : core.
 
   (** * Now we adapt the automated proof of type soundness. *)
-
   Ltac t0 := match goal with
              | [ H : ex _ |- _ ] => invert H
              | [ H : _ /\ _ |- _ ] => invert H
@@ -126,7 +125,9 @@ Module Stlc.
              | [ H : plug _ _ _ |- _ ] => invert1 H
              end; subst.
 
-  Ltac t := simplify; propositional; repeat (t0; simplify); try equality; eauto 6.
+  Ltac t := 
+    simplify; propositional; repeat (t0; simplify); 
+    try equality; eauto 6.
 
   Lemma progress : forall e t,
     has_ty $0 e t
@@ -417,6 +418,8 @@ Module StlcPairs.
     has_ty G e1 (Fun t1 t2)
     -> has_ty G e2 t1
     -> has_ty G (App e1 e2) t2
+
+  (* New typing rules *)
   | HtPair : forall G e1 e2 t1 t2,
     has_ty G e1 t1
     -> has_ty G e2 t2
@@ -542,6 +545,42 @@ Module StlcPairs.
   Qed.
 End StlcPairs.
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 (* Next, the dual feature of *variants*, corresponding to the following type
  * family from Coq's standard library. *)
 
@@ -568,6 +607,8 @@ Module StlcSums.
   | VConst : forall n, value (Const n)
   | VAbs : forall x e1, value (Abs x e1)
   | VPair : forall v1 v2, value v1 -> value v2 -> value (Pair v1 v2)
+  
+  (* New cases: *)
   | VInl : forall v, value v -> value (Inl v)
   | VInr : forall v, value v -> value (Inr v).
 
@@ -584,9 +625,10 @@ Module StlcSums.
       (* Some bureaucratic work here to add predictable cases *)
       | Inl e2' => Inl (subst e1 x e2')
       | Inr e2' => Inr (subst e1 x e2')
-      | Match e2' x1 e21 x2 e22 => Match (subst e1 x e2')
-                                         x1 (if x1 ==v x then e21 else subst e1 x e21)
-                                         x2 (if x2 ==v x then e22 else subst e1 x e22)
+      | Match e2' x1 e21 x2 e22 => 
+          Match (subst e1 x e2')
+            x1 (if x1 ==v x then e21 else subst e1 x e21)
+            x2 (if x2 ==v x then e22 else subst e1 x e22)
     end.
 
   Inductive context : Set :=
@@ -847,6 +889,41 @@ Module StlcSums.
   Qed.
 End StlcSums.
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 (** * Exceptions *)
 
 (* Evaluation contexts are very helpful for concise modeling of control-flow
@@ -965,7 +1042,8 @@ Module StlcExceptions.
     -> plug ac (Throw1 C) e (Throw e')
   | PlugCatch1 : forall e e' C x1 e1,
     plug true C e e'
-    -> plug true (Catch1 C x1 e1) e (Catch e' x1 e1).
+    -> plug true (Catch1 C x1 e1) e (Catch e' x1 e1). 
+        (* [true] is important *)
 
   Inductive step0 : exp -> exp -> Prop :=
   | Beta : forall x e v,
@@ -990,7 +1068,8 @@ Module StlcExceptions.
 
   (* New cases: *)
   | ThrowBubble : forall v C e,
-      plug false C (Throw v) e
+      plug false C (Throw v) e 
+       (* [false] is important *)
       -> value v
       -> C <> Hole
       -> step0 e (Throw v)
@@ -1000,20 +1079,15 @@ Module StlcExceptions.
   | CatchThrow : forall v x1 e1,
       value v
       -> step0 (Catch (Throw v) x1 e1) (subst v x1 e1).
-
-  Inductive step : exp -> exp -> Prop :=
-  | StepRule : forall C e1 e2 e1' e2',
-    plug true C e1 e1'
-    -> plug true C e2 e2'
-    -> step0 e1 e2
-    -> step e1' e2'.
-
+      
+      
   Definition e1 := (Plus (Plus (Throw (Const 0)) (Const 1)) (Const 2)).
   (* throw 0 + 1 + 2 *)
   
   Example ex2: step0 e1 (Throw (Const 0)).
   (* throw 0 + 1 + 2 -----> throw 0 *)
   Proof.
+    unfold e1.
     eapply ThrowBubble.
     econstructor.
     econstructor.
@@ -1021,15 +1095,53 @@ Module StlcExceptions.
     econstructor.
     equality.
   Qed.
+  
+
+  
+  Definition e0 := Catch (Throw (Const 0)) "x" (Const 1).
+
+  Example impossible: step0 e0 (Throw (Const 0)).
+    (* try (throw 0) catch x => 1 *)
+  Proof.
+    unfold e0.
+    eapply ThrowBubble.
+    Fail econstructor.
+  Abort.
+
+  Inductive step : exp -> exp -> Prop :=
+  | StepRule : forall C e1 e2 e1' e2',
+    plug true C e1 e1'
+    -> plug true C e2 e2'
+    -> step0 e1 e2
+    -> step e1' e2'.
+    
+  Example ex3: step e1 (Throw (Const 0)).
+  Proof.
+    eapply StepRule with (e1 := e1).
+    Print e1.
+    3: { apply ex2. }
+    econstructor.
+    econstructor.
+  Qed.
 
  Example ex4: step^* (Catch e1 "x" (Const 1)) (Const 1).
  (* try 
       throw 0 + 1 + 2
-    with x -> 1
+    catch x => 1
     
-    -----> 
+    ->* 
     
     1 *)
+    
+ (* Why?
+ 
+    try (throw 0 + 1 + 2) catch x => 1
+  = C[throw 0 + 1 + 2] where C  = try Hole catch x => 1
+  = C[Cˉ[throw 0]]     where C  = try Hole catch x => 1
+                             Cˉ = Hole + 1 + 2
+  -> C[throw 0]        where C  = try Hole catch x => 1
+ 
+ *)
  Proof.
    econstructor.
    eapply StepRule with (e1 := e1).
@@ -1223,6 +1335,7 @@ Qed.
   Proof.
     invert 1; t.
   Qed.
+ 
 
   Local Hint Resolve progress preservation : core.
 

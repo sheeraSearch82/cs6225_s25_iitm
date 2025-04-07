@@ -21,10 +21,10 @@ moodle]().
 | 6 | 21/02/25 | 01/03/25 | F* Functional Verification |
 | 7 | 05/03/25 | 15/03/25 | Transition Systems |
 | 8 | 13/03/25 | 22/03/25 | Big Step vs Interpreter (Operational Semantics) | 
-| 9 | 13/03/25 | 29/03/25 | Subtyping (Lambda Calculus + Evaluation Contexts) |
-| 10 | | | Hoare Logic |
-| 11 | | | FStar Effects |
-| 12 | | | Pulse -- Concurrent Separation Logic |
+| 9 | 13/03/25 | 03/04/25 | Subtyping (Lambda Calculus + Evaluation Contexts) |
+| 10 | 02/04/25 | 10/04/25 | Hoare Logic |
+| 11 | 02/04/25 | 17/04/25 | FStar Effects |
+| 12 | 05/04/25 | 01/05/25 | Pulse -- Concurrent Separation Logic |
 
 <br/>
 
