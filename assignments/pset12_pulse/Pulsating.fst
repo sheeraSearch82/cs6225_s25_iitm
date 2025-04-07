@@ -23,24 +23,33 @@ ensures pts_to r1 'v2 ** pts_to r2 'v1
 }
 
 (******************************************************************************)
-(* Mutable Fibonacci (10 points) *)
+(* Mutable Tribonacci (10 points) *)
 (******************************************************************************)
 
 (* We have seen the mutable implementation of Fibonacci in the FStar effects
    lecture where we proved that it satisfies the functional specification.
-   Implement a pulse version of it. *)
+   Similarly, we have seen Fibonacci implementation in Pulse. Implement a Pulse
+   version of Tribonacci numbers, and prove it correct according to the spec
+   below: *)
 
-let rec fib (n:nat) : nat =
-  if n <= 1 then 1
-  else fib (n - 1) + fib (n - 2)
+let rec tribonacci (n:nat) : nat =
+  if n = 0 then 0
+  else if n = 1 then 0
+  else if n = 2 then 1
+  else tribonacci (n - 1) + tribonacci (n - 2) + tribonacci (n - 3)
 
-fn fib_mut (n:nat)
+(* You will need to use 3 mutable references *)
+fn trib_mut (n:nat)
 requires emp
 returns r:nat
-ensures pure (fib n = r)
+ensures pure (tribonacci n = r)
 {
   admit ();
 }
+
+(******************************************************************************)
+(* Array.find (20 points) *)
+(******************************************************************************)
 
 module A = Pulse.Lib.Array
 module R = Pulse.Lib.Reference
@@ -48,9 +57,6 @@ module SZ = FStar.SizeT
 open FStar.SizeT
 open Pulse.Lib.BoundedIntegers
 
-(******************************************************************************)
-(* Array.find (20 points) *)
-(******************************************************************************)
 
 (* You can see the implementation of a [Array.fill] function below for
    reference. *)

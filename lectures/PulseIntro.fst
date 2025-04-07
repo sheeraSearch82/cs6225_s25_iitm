@@ -1993,3 +1993,120 @@ But, we have a permission accounting problem:
 
 The solution is to a "trade".
 
+*)
+
+
+fn tail (#t:Type) (x:llist t)
+requires is_list x 'l ** pure (Some? x) //x is a non-null pointer
+returns y:llist t
+ensures exists* tl.
+    is_list y tl **
+    (is_list y tl @==> is_list x 'l) **
+      //you can recover the original permission [is_list x 'l] only if you trade
+      //the permission [is_list y tl]
+    pure (Cons? 'l /\ tl == Cons?.tl 'l)
+{
+    let np = Some?.v x;
+    is_list_case_some x np;
+    with node tl. _;
+    let nd = !np;
+    rewrite each node as nd;
+    tail_for_cons np tl;
+    nd.tail
+}
+
+fn length_iter (#t:Type) (x: llist t)
+requires is_list x 'l
+returns n:nat
+ensures is_list x 'l ** pure (n == List.Tot.length 'l)
+{
+  let mut cur = x;
+  let mut ctr = 0;
+  I.refl (is_list x 'l); //initialize the trade for the invariant
+  while (
+    let v = !cur;
+    Some? v
+  )
+  invariant b.
+  exists* n ll suffix.
+    pts_to ctr n **
+    pts_to cur ll **
+    is_list ll suffix **
+    pure (n == List.Tot.length 'l - List.Tot.length suffix /\
+          b == (Some? ll)) **
+    (is_list ll suffix @==> is_list x 'l)
+  {
+    with _n _ll _suffix. _; //bind existential variables in the invariant
+    let n = !ctr;
+    let ll = !cur;
+    rewrite each _ll as ll; //again, rewrite the context to use ll instead of _ll
+    //show_proof_state;
+      (* is_list ll suffix @==> is_list x 'l **
+         is_list ll suffix
+      *)
+    let next = tail ll;     //tail gives us back a trade
+    //show_proof_state;
+      (* is_list ll suffix @==> is_list x 'l **
+         (exists* (tl:list t).
+            is_list next tl **
+            is_list next tl @==> is_list ll suffix **
+            pure (Cons? suffix /\ tl == suffix.tl)))
+      *)
+    with tl. _;
+    //show_proof_state;
+      (* is_list ll suffix @==> is_list x 'l **
+         is_list next tl @==> is_list ll suffix **
+         is_list next tl
+      *)
+    I.trans (is_list next tl) _ _; //extend the trade, transitively
+    //show_proof_state;
+      (* is_list next tl @==> is_list x 'l **
+         is_list next tl
+      *)
+    cur := next;
+    ctr := n + 1;
+  };
+  with _n ll _sfx. _;
+  is_list_case_none ll; //this tells us that suffix=[]; so n == List.Tot.length 'l
+  I.elim _ _;           //regain ownership of x, giving up ll
+  let n = !ctr;
+  n
+}
+
+(* Append, Recursively *)
+
+fn rec append (#t:Type0) (x y:llist t)
+requires is_list x 'l1 ** is_list y 'l2 ** pure (Some? x)
+ensures is_list x ('l1 @ 'l2)
+{
+  let np = Some?.v x;
+  is_list_case_some x np;
+  with _node _tl. _;
+  let node = !np;
+  rewrite each _node as node;
+  match node.tail {
+    None -> {
+      //show_proof_state;
+        (* R.pts_to np node **
+           is_list y 'l2 **
+           is_list None tl *)
+      is_list_case_none node.tail;
+      elim_is_list_nil node.tail;
+      //show_proof_state;
+        (* pure (node.tail == None) **
+           R.pts_to np node **
+           is_list y 'l2
+         *)
+      np := { node with tail = y };
+      //show_proof_state;
+      rewrite each y as ({ node with tail = y }).tail in (is_list y 'l2);
+      //show_proof_state;
+      intro_is_list_cons x np;
+      //show_proof_state;
+    }
+    Some _ -> {
+      append node.tail y;
+      intro_is_list_cons x np;
+    }
+  }
+}

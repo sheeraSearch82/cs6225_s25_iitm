@@ -1,4 +1,4 @@
-module PulseIntro
+module PulseIntroLecture
 #lang-pulse
 open Pulse
 
@@ -78,7 +78,7 @@ fn five' (x : ref int)
 }
 
 fn incr (x:ref int)
-requires pts_to x 'i (* implicitly bound logical variable *)
+requires pts_to x 'i
 ensures pts_to x ('i + 1)
 {
     let v = !x;
@@ -138,9 +138,10 @@ heaps that they accept.
 
 fn incr_frame (x y:ref int)
 requires pts_to x 'i ** pts_to y 'j
-ensures pts_to x ('i + 1) ** pts_to y 'j
+ensures pts_to x ('i + 1) ** pts_to y ('j + 1)
 {
    incr x;
+   incr y;
 }
 
 (* In fact, Pulse lets us use the frame rule with any `f:slprop`, and we get,
@@ -167,7 +168,8 @@ ensures pts_to x ('i + 1) ** f
 *)
 
 (* [ref t] type is agnostic to whether it is in heap or stack. Comes from
-   [Pulse.Lib.Reference.ref t] *)
+   [Pulse.Lib.Reference.ref t]. We write programs over [ref t] and then use it
+   with both Stack and Heap references. *)
 
 fn swap #a (r0 r1:ref a)
 requires pts_to r0 'v0 ** pts_to r1 'v1
@@ -250,7 +252,6 @@ ensures pts_to r (4 * 'v)
 {
     let v1 = !r; // Env=v1:int; _:squash (v1 == 'v)       Ctxt= pts_to r v1
     add r v1;    // ...                                   Ctxt= pts_to r (v1 + v1)
-    show_proof_state;
     let v2 = !r; // Env=...; v2:int; _:squash(v2==v1+v1)  Ctxt= pts_to r v2
     add r v2;    // Env=...                               Ctxt= pts_to r (v2 + v2)
                  // ..                                    Ctxt= pts_to r (4 * 'v)
@@ -266,6 +267,8 @@ ensures pts_to r (4 * 'v)
     add r (!r);
     add r (!r);
 }
+
+(* STOPPED HERE: 07/04/25 *)
 
 (* Fractional Permissions *)
 
@@ -510,11 +513,11 @@ fn double_alt (r:ref (int & int))
 requires pts_to_diag r 'v
 ensures pts_to_diag r (2 * 'v)
 {
-  unfold pts_to_diag;
+  unfold pts_to_diag; //NOTE: arugments not provided
   let v = !r;
   let v2 = fst v + snd v;
   r := (v2, v2);
-  fold pts_to_diag;
+  fold pts_to_diag; //NOTE: arugments not provided
 }
 
 (* Mutable points *)
@@ -534,7 +537,7 @@ fn move (p:point) (dx:int) (dy:int)
 requires is_point p 'xy
 ensures is_point p (fst 'xy + dx, snd 'xy + dy)
 {
-  unfold is_point;
+  unfold is_point; //NOTE: arguments are not provided
   let x = !p.x;
   let y = !p.y;
   p.x := x + dx;
@@ -544,6 +547,7 @@ ensures is_point p (fst 'xy + dx, snd 'xy + dy)
     //Pulse cannot infer the instantiation of [is_point] when folding it.
 }
 
+(* Package into convenient helper function *)
 ghost
 fn fold_is_point (p:point)
 requires pts_to p.x 'x ** pts_to p.y 'y
@@ -1995,3 +1999,119 @@ But, we have a permission accounting problem:
 
 The solution is to a "trade".
 
+*)
+
+fn tail (#t:Type) (x:llist t)
+requires is_list x 'l ** pure (Some? x) //x is a non-null pointer
+returns y:llist t
+ensures exists* tl.
+    is_list y tl **
+    (is_list y tl @==> is_list x 'l) **
+      //you can recover the original permission [is_list x 'l] only if you trade
+      //the permission [is_list y tl]
+    pure (Cons? 'l /\ tl == Cons?.tl 'l)
+{
+    let np = Some?.v x;
+    is_list_case_some x np;
+    with node tl. _;
+    let nd = !np;
+    rewrite each node as nd;
+    tail_for_cons np tl;
+    nd.tail
+}
+
+fn length_iter (#t:Type) (x: llist t)
+requires is_list x 'l
+returns n:nat
+ensures is_list x 'l ** pure (n == List.Tot.length 'l)
+{
+  let mut cur = x;
+  let mut ctr = 0;
+  I.refl (is_list x 'l); //initialize the trade for the invariant
+  while (
+    let v = !cur;
+    Some? v
+  )
+  invariant b.
+  exists* n ll suffix.
+    pts_to ctr n **
+    pts_to cur ll **
+    is_list ll suffix **
+    pure (n == List.Tot.length 'l - List.Tot.length suffix /\
+          b == (Some? ll)) **
+    (is_list ll suffix @==> is_list x 'l)
+  {
+    with _n _ll _suffix. _; //bind existential variables in the invariant
+    let n = !ctr;
+    let ll = !cur;
+    rewrite each _ll as ll; //again, rewrite the context to use ll instead of _ll
+    //show_proof_state;
+      (* is_list ll suffix @==> is_list x 'l **
+         is_list ll suffix
+      *)
+    let next = tail ll;     //tail gives us back a trade
+    //show_proof_state;
+      (* is_list ll suffix @==> is_list x 'l **
+         (exists* (tl:list t).
+            is_list next tl **
+            is_list next tl @==> is_list ll suffix **
+            pure (Cons? suffix /\ tl == suffix.tl)))
+      *)
+    with tl. _;
+    //show_proof_state;
+      (* is_list ll suffix @==> is_list x 'l **
+         is_list next tl @==> is_list ll suffix **
+         is_list next tl
+      *)
+    I.trans (is_list next tl) _ _; //extend the trade, transitively
+    //show_proof_state;
+      (* is_list next tl @==> is_list x 'l **
+         is_list next tl
+      *)
+    cur := next;
+    ctr := n + 1;
+  };
+  with _n ll _sfx. _;
+  is_list_case_none ll; //this tells us that suffix=[]; so n == List.Tot.length 'l
+  I.elim _ _;           //regain ownership of x, giving up ll
+  let n = !ctr;
+  n
+}
+
+(* Append, Recursively *)
+
+fn rec append (#t:Type0) (x y:llist t)
+requires is_list x 'l1 ** is_list y 'l2 ** pure (Some? x)
+ensures is_list x ('l1 @ 'l2)
+{
+  let np = Some?.v x;
+  is_list_case_some x np;
+  with _node _tl. _;
+  let node = !np;
+  rewrite each _node as node;
+  match node.tail {
+    None -> {
+      //show_proof_state;
+        (* R.pts_to np node **
+           is_list y 'l2 **
+           is_list None tl *)
+      is_list_case_none node.tail;
+      elim_is_list_nil node.tail;
+      //show_proof_state;
+        (* pure (node.tail == None) **
+           R.pts_to np node **
+           is_list y 'l2
+         *)
+      np := { node with tail = y };
+      //show_proof_state;
+      rewrite each y as ({ node with tail = y }).tail in (is_list y 'l2);
+      //show_proof_state;
+      intro_is_list_cons x np;
+      //show_proof_state;
+    }
+    Some _ -> {
+      append node.tail y;
+      intro_is_list_cons x np;
+    }
+  }
+}

@@ -20,4 +20,3 @@ val incr3 : x:ref int -> y:ref int -> ST unit
     sel h2 x == sel h0 x + 1 /\
     sel h2 y == sel h0 y))
 let incr3 x y = x := !x + 1
-
