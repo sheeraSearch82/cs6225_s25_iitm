@@ -235,7 +235,7 @@ ensures is_list x 'l ** pure (n == k + List.Tot.length 'l)
 //append$
 fn rec append (#t:Type0) (x y:llist t)
 requires is_list x 'l1 ** is_list y 'l2 ** pure (Some? x)
-ensures is_list x ('l1 @ 'l2)
+ensures is_list x ('l1 @ 'l2) ** pure (Some? x)
 {
   let np = Some?.v x;
   is_list_case_some x np;
@@ -320,7 +320,7 @@ fn create (t:Type)
 fn cons (#t:Type) (v:t) (x:llist t)
     requires is_list x 'l
     returns y:llist t
-    ensures is_list y (v::'l)
+    ensures is_list y (v::'l) ** pure (Some? y)
 {
     let y = alloc { head=v; tail=x };
     rewrite each x as ({head=v; tail=x}).tail in (is_list x 'l);
@@ -332,7 +332,7 @@ fn cons (#t:Type) (v:t) (x:llist t)
 fn rec reverse (#t:Type0) (x:llist t)
 requires is_list x 'l1
 returns y:llist t
-ensures is_list y  (rev 'l1)
+ensures is_list y  (rev 'l1) ** (pure (Some? x ==> Some? y))
 {
    match x {
     None -> {
@@ -361,8 +361,7 @@ ensures is_list y  (rev 'l1)
       }
         Some vlr -> {
          let rev_tl = reverse node.tail;
-         _assume (Some? rev_tl);
-         let np1 = Some?.v rev_tl;
+         //_assume (Some? rev_tl);
          append rev_tl hd_lst;
          free np;
          rev_tl
