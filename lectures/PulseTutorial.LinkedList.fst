@@ -19,7 +19,9 @@ module PulseTutorial.LinkedList
 #lang-pulse
 open Pulse.Lib.Pervasives
 module FA = Pulse.Lib.Forall.Util
-open FStar.List.Tot
+//open FStar.List.Tot
+module L = FStar.List.Tot
+
 
 //llist$
 noeq
@@ -241,11 +243,26 @@ ensures is_list x ('l1 @ 'l2)
   let node = !np;
   rewrite each _node as node;
   match node.tail {
+    (* tail of x can be empty or non-empty *)
+    (* If empty, that is the point of appending *)
     None -> {
+      (* requires is_list x l ** pure (x == None)
+         ensures is_list x l ** pure (l == []) *)
       is_list_case_none None;
+
+      (* requires is_list x 'l ** pure ('l == [])
+         ensures pure (x == None) *)
+
       elim_is_list_nil None;
       np := { node with tail = y };
       rewrite each y as ({ node with tail = y }).tail in (is_list y 'l2);
+
+      (* requires
+              pts_to v node **
+              is_list node.tail tl **
+              pure (x == Some v)
+         ensures
+              is_list x (node.head::tl) *)
       intro_is_list_cons x np; 
     }
     Some _ -> {
@@ -254,6 +271,7 @@ ensures is_list x ('l1 @ 'l2)
     }
   }
 }
+
 //end append$
 
 val rev_acc: list 'a -> list 'a -> Tot (list 'a)
@@ -266,6 +284,7 @@ val rev: list 'a -> Tot (list 'a)
 
 let rec rev l  = match l with
     | [] -> []
+    | [x] -> [x]
     | hd::tl -> List.Tot.append (rev tl) (hd::[])
 
 (* l = [1,2,3] 
@@ -285,52 +304,72 @@ module Box = Pulse.Lib.Box
 //open Pulse.Lib.Box { box, (:=), (!) }
 
 
+let null_llist #t : llist t = None #(node_ptr t)
+
+fn create (t:Type)
+    requires emp
+    returns x:llist t
+    ensures is_list x []
+{
+    fold (is_list null_llist ([] <: list t));
+    null_llist #t
+}
+
+
+
 fn cons (#t:Type) (v:t) (x:llist t)
     requires is_list x 'l
     returns y:llist t
     ensures is_list y (v::'l)
 {
-    let y = Box.alloc { head=v; tail=x };
+    let y = alloc { head=v; tail=x };
     rewrite each x as ({head=v; tail=x}).tail in (is_list x 'l);
-    //intro_is_list_cons (Some y) y;
-    //Some y
-    admit()
+    fold (is_list (Some y) (v::'l));
+    Some y
 }
 
-let null_list_t (t:Type0) : llist t = None
-
-
-fn create (#t:Type0)
-  requires emp
-  returns x:llist t
-  ensures is_list x []
-{
-  let tree = null_list_t t;
-  intro_is_list_nil  tree;
-  tree
-}
 
 fn rec reverse (#t:Type0) (x:llist t)
 requires is_list x 'l1
-ensures is_list x (rev 'l1)
+returns y:llist t
+ensures is_list y  (rev 'l1)
 {
    match x {
     None -> {
-      is_list_case_none x
+      //is_list_case_none x;
+      let y = create t;
+      elim_is_list_nil y;
+      is_list_case_none y;
+      y
       
     }
     Some vl -> {
-      is_list_case_some x vl;
-      let node = !vl;
-      
-      (*  List.Tot.append (rev tl) (hd::[])  ---> bring this here in Pulse*) 
-      //cons node.head None;
-      //reverse node.tail;
-      //append (reverse node.tail) (cons (node.head) x);
-       
-      (*intro_is_list_cons x vl;
-      (1 + n)*)
-      admit()
+      let np = Some?.v x;
+      is_list_case_some x np;
+      with _node _tl. _;
+      let node = !np;
+      rewrite each _node as node;
+      let empty = create t;
+      let hd_lst = cons node.head empty;
+      match node.tail 
+      {
+        None -> {
+          is_list_case_none None;
+          elim_is_list_nil None;
+          free np;
+          hd_lst
+      }
+        Some vlr -> {
+         let rev_tl = reverse node.tail;
+         _assume (Some? rev_tl);
+         let np1 = Some?.v rev_tl;
+         append rev_tl hd_lst;
+         free np;
+         rev_tl
+         
     }
+   }
   }
+ }
 }
+
